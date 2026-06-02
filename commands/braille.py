@@ -5,51 +5,55 @@ router = Router()
 logger = logging.getLogger(__name__)
 
 BRAILLE_DIGITS = {
-    '1': '⠁', '2': '⠃', '3': '⠉', '4': '⠙', '5': '⠑',
-    '6': '⠋', '7': '⠛', '8': '⠓', '9': '⠊', '0': '⠚'
+   '1': '⠁', '2': '⠃', '3': '⠉', '4': '⠙', '5': '⠑',
+   '6': '⠋', '7': '⠛', '8': '⠓', '9': '⠊', '0': '⠚'
 }
 REVERSE_BRAILLE_DIGITS = {v: k for k, v in BRAILLE_DIGITS.items()}
 BRAILLE_NUM_SIGN = '⠼'
+BRAILLE_CHARS = set(REVERSE_BRAILLE_DIGITS.keys())
 
+
+def _is_braille_text(text: str) -> bool:
+   return BRAILLE_NUM_SIGN in text or bool(BRAILLE_CHARS & set(text))
 
 
 def encode_text_to_braille_unicode(text: str) -> str:
-    if not text:
-        return ""
-    blocks = []
-    for char in text:
-        unicode_val = ord(char)
-        unicode_str = str(unicode_val)
-        braille_num = BRAILLE_NUM_SIGN + "".join(BRAILLE_DIGITS[d] for d in unicode_str)
-        blocks.append(braille_num)
-    return " | ".join(blocks)
+   if not text:
+       return ""
+   blocks = []
+   for char in text:
+       braille_num = BRAILLE_NUM_SIGN + "".join(
+           BRAILLE_DIGITS[d] for d in str(ord(char))
+       )
+       blocks.append(braille_num)
+   return " | ".join(blocks)
 
 
 def decode_braille_unicode_to_text(braille_text: str) -> str:
-    try:
-        blocks = [b.strip() for b in braille_text.split('|')]
-        decoded = []
+   try:
+       blocks = [b.strip() for b in braille_text.split('|')]
+       decoded = []
 
-        for block in blocks:
-            if not block:
-                continue
+       for block in blocks:
+           if not block:
+               continue
 
-            if block.startswith(BRAILLE_NUM_SIGN):
-                block = block[1:]
+           if block.startswith(BRAILLE_NUM_SIGN):
+               block = block[len(BRAILLE_NUM_SIGN):]
 
-            digits = "".join(REVERSE_BRAILLE_DIGITS.get(ch, '') for ch in block)
+           digits = "".join(REVERSE_BRAILLE_DIGITS.get(ch, '') for ch in block)
 
-            if digits.isdigit():
-                decoded.append(chr(int(digits)))
-            else:
-                decoded.append('?')
+           if digits.isdigit():
+               decoded.append(chr(int(digits)))
+           else:
+               logger.warning(f"Не вдалося декодувати блок: {block!r}")
+               decoded.append('?')
 
-        return "".join(decoded)
+       return "".join(decoded)
 
-    except Exception as e:
-        logger.error(f"Braille decode error: {e}")
-        return "Decoding Error! Check your input."
-
+   except Exception as e:
+       logger.error(f"Помилка декодування Braille: {e}")
+       return "Помилка декодування! Перевірте введені дані."
 
 
 NOT_COMMAND = ~F.entities.any(F.type == "bot_command")
@@ -57,70 +61,61 @@ ONLY_TEXT = F.content_type == "text"
 HAS_TEXT = F.text.len() > 0
 
 
-@router.message(
-    ONLY_TEXT
-    & HAS_TEXT
-    & NOT_COMMAND
-)
+@router.message(ONLY_TEXT & HAS_TEXT & NOT_COMMAND)
 async def braille_auto(message: types.Message):
-    text = message.text
+   text = message.text
 
-    if BRAILLE_NUM_SIGN in text or '⠁' in text or '|' in text:
-        decoded = decode_braille_unicode_to_text(text)
-        await message.reply(
-            f"<b>Decoded (Braille → Text):</b>\n"
-            f"<blockquote expandable>{decoded}</blockquote>",
-            parse_mode="HTML"
-        )
-    else:
-        encoded = encode_text_to_braille_unicode(text)
-        await message.reply(
-            f"<b>Encoded (Text → Braille Unicode):</b>\n"
-            f"<blockquote expandable>{encoded}</blockquote>",
-            parse_mode="HTML"
-        )
+   if _is_braille_text(text):
+       result = decode_braille_unicode_to_text(text)
+       label = "Декодовано (Braille → Текст)"
+   else:
+       result = encode_text_to_braille_unicode(text)
+       label = "Закодовано (Текст → Braille Unicode)"
 
+   await message.reply(
+       f"<b>{label}:</b>\n"
+       f"<blockquote expandable>{result}</blockquote>",
+       parse_mode="HTML"
+   )
 
 
 @router.inline_query()
 async def braille_inline(inline_query: types.InlineQuery):
-    text = inline_query.query
-    if not text:
-        return
+   text = inline_query.query
+   if not text:
+       return
 
-    results = []
+   if _is_braille_text(text):
+       decoded = decode_braille_unicode_to_text(text)
+       results = [
+           types.InlineQueryResultArticle(
+               id="braille_decode",
+               title="Декодувати Braille Unicode",
+               description=f"Попередній перегляд: {decoded}",
+               input_message_content=types.InputTextMessageContent(
+                   message_text=(
+                       f"<b>Декодовано (Braille → Текст):</b>\n"
+                       f"<blockquote expandable>{decoded}</blockquote>"
+                   ),
+                   parse_mode="HTML"
+               )
+           )
+       ]
+   else:
+       encoded = encode_text_to_braille_unicode(text)
+       results = [
+           types.InlineQueryResultArticle(
+               id="braille_encode",
+               title="Закодувати в Braille Unicode",
+               description=f"Попередній перегляд: {encoded[:30]}...",
+               input_message_content=types.InputTextMessageContent(
+                   message_text=(
+                       f"<b>Закодовано (Текст → Braille Unicode):</b>\n"
+                       f"<blockquote expandable>{encoded}</blockquote>"
+                   ),
+                   parse_mode="HTML"
+               )
+           )
+       ]
 
-    encoded = encode_text_to_braille_unicode(text)
-    results.append(
-        types.InlineQueryResultArticle(
-            id="braille_encode",
-            title="Encode to Braille Unicode",
-            description=f"Preview: {encoded[:30]}...",
-            input_message_content=types.InputTextMessageContent(
-                message_text=(
-                    f"<b>Encoded (Text → Braille Unicode):</b>\n"
-                    f"<blockquote expandable>{encoded}</blockquote>"
-                ),
-                parse_mode="HTML"
-            )
-        )
-    )
-
-    if any(ch in text for ch in [BRAILLE_NUM_SIGN, '|', '⠁', '⠃', '⠉']):
-        decoded = decode_braille_unicode_to_text(text)
-        results.append(
-            types.InlineQueryResultArticle(
-                id="braille_decode",
-                title="Decode Braille Unicode",
-                description=f"Preview: {decoded}",
-                input_message_content=types.InputTextMessageContent(
-                    message_text=(
-                        f"<b>Decoded (Braille → Text):</b>\n"
-                        f"<blockquote expandable>{decoded}</blockquote>"
-                    ),
-                    parse_mode="HTML"
-                )
-            )
-        )
-
-    await inline_query.answer(results, cache_time=1, is_personal=True)
+   await inline_query.answer(results, cache_time=1, is_personal=True)
