@@ -1,0 +1,8 @@
+[build]
+builder = "NIXPACKS"
+
+[deploy]
+start = "python bot.py"
+
+[variables]
+PYTHON_VERSION = "3.12"

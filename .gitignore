@@ -1,0 +1,170 @@
+# ==========================================
+# Byte-compiled / optimized / DLL files
+# ==========================================
+__pycache__/
+*.py[codz]
+*.pyo
+*.pyd
+*$py.class
+
+# ==========================================
+# Environments & Virtual Environments
+# ==========================================
+.env
+.envrc
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+*.env
+.env.*
+!example.env
+
+# ==========================================
+# Distribution / packaging / Build
+# ==========================================
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# PyPI configuration file
+.pypirc
+
+# ==========================================
+# Package Managers (Locks are un-commented to keep them in Git)
+# ==========================================
+# Pipenv
+# Pipfile.lock
+# UV
+# uv.lock
+# poetry
+# poetry.lock
+# poetry.toml
+# pdm
+# pdm.lock
+# pdm.toml
+
+.pdm-python
+.pdm-build/
+.pixi
+__pypackages__/
+
+# ==========================================
+# Unit test / coverage reports / Linters
+# ==========================================
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py.cover
+.hypothesis/
+.pytest_cache/
+cover/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+.ruff_cache/
+
+# ==========================================
+# Databases & Logs
+# ==========================================
+*.log
+pip-log.txt
+pip-delete-this-directory.txt
+*.db
+*.sqlite3
+db.sqlite3-journal
+
+# ==========================================
+# Frameworks (Django, Flask, Scrapy, etc.)
+# ==========================================
+instance/
+.webassets-cache
+.scrapy
+
+# Note: "migrations/" was intentionally REMOVED from here 
+# because migration files MUST be tracked by Git.
+
+# ==========================================
+# DevOps & Task Queues (Celery, Redis, etc.)
+# ==========================================
+celerybeat-schedule
+celerybeat.pid
+*.rdb
+*.aof
+*.pid
+mnesia/
+rabbitmq/
+rabbitmq-data/
+activemq-data/
+
+# ==========================================
+# IDEs and Editors
+# ==========================================
+# PyCharm / JetBrains
+.idea/
+*.iml
+
+# Visual Studio Code
+.vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+tempCodeRunnerFile.py
+
+# Other Editors
+.spyderproject
+.spyproject
+.ropeproject
+
+# ==========================================
+# Notebooks, Docs & Analytics
+# ==========================================
+.ipynb_checkpoints
+profile_default/
+ipython_config.py
+docs/_build/
+/site
+*.sage.py
+.pybuilder/
+target/
+cython_debug/
+.abstra/
+marimo/_static/
+marimo/_lsp/
+__marimo__/
+.streamlit/secrets.toml
+
+# ==========================================
+# Operating System Files (General)
+# ==========================================
+.DS_Store
+Thumbs.db
