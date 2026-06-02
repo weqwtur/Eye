@@ -35,7 +35,7 @@
 Топ 10 користувачів по “миганням”.  
 Також юзер.ід оброблюється трохи коротшим шляхом (візуально):
 
-<img width="420" height="120" alt="Id" src="https://github.com/user-attachments/assets/6f721511-a6cc-423d-8c5e-58eb535296f3" />
+<img width="420" height="120" alt="Id" src="https://github.com/user-attachments/assets/0ea44953-1393-4cf2-9146-0644ecc5c619" />
 
 Оновлення рейтингу проходить по інлайн кнопці “↻” знизу.
 
