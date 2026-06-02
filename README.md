@@ -4,7 +4,7 @@
 
 # [𓂀 Eye  Telegram Bot](https://t.me/WhatAnEyeBot)
 
-> *Око бачить все.*
+> *The Eye sees everything.*
 
 [![Python](https://img.shields.io/badge/Python-3.14-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
 [![aiogram](https://img.shields.io/badge/aiogram-3.7.0-009ACD?style=flat-square&logo=telegram&logoColor=white)](https://aiogram.dev)
