@@ -30,6 +30,7 @@ from media_id import router as media_id_router
 from commands.top.top import router as top_router
 from commands.media.media import router as media_menu_router
 from commands.facts import router as facts_router
+from commands.github import router as github_router
 
 from commands.media.media1 import router as media1_router
 from commands.media.media2 import router as media2_router
@@ -53,6 +54,7 @@ dp.include_router(media_id_router)
 dp.include_router(top_router)
 dp.include_router(media_menu_router)
 dp.include_router(facts_router)
+dp.include_router(github_router)
 
 dp.include_router(media1_router)
 dp.include_router(media2_router)
