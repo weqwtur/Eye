@@ -29,7 +29,7 @@ GITHUB_MESSAGE = (
 async def github_command(message: types.Message):
    builder = InlineKeyboardBuilder()
    builder.button(
-       text="⌨️ Open Repository",
+       text="Open Repository ",
        url=GITHUB_URL
    )
 
