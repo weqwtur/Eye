@@ -10,22 +10,28 @@ router = Router()
 
 ADMIN_ID = int(os.getenv("ADMIN_ID"))
 
+
 class ReportState(StatesGroup):
     waiting_for_text = State()
 
 
-async def start_report_from_menu(message: types.Message, state: FSMContext):
-    kb = InlineKeyboardMarkup(inline_keyboard=[
+def report_back_keyboard():
+    return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="⬅ Back to Menu", callback_data="menu:back")]
     ])
-    await message.edit_text("Write your report:", reply_markup=kb)
+
+
+async def start_report_from_menu(message: types.Message, state: FSMContext):
+    await message.edit_text("Write your report:", reply_markup=report_back_keyboard())
     await state.set_state(ReportState.waiting_for_text)
 
 
-@router.callback_query(F.data == "menu:back")
+@router.callback_query(F.data == "menu:back", F.message.chat.type == "private")
 async def back_to_menu(callback: types.CallbackQuery, state: FSMContext):
     await state.clear()
-    await callback.message.edit_text("You are back in menu.")
+    from commands.menu import menu_start
+    await menu_start(callback.message)
+    await callback.answer()
 
 
 @router.message(ReportState.waiting_for_text, F.chat.type == "private")
@@ -49,8 +55,8 @@ async def receive_report(message: types.Message, state: FSMContext):
     if doc:
         await message.bot.send_document(ADMIN_ID, doc)
 
-    await message.answer("Your report has been sent.")
     await state.clear()
+    await message.answer("Your report has been sent.")
 
 
 @router.message(Command("reply"))
