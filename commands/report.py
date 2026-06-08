@@ -4,6 +4,7 @@ from aiogram import Router, types, F
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 router = Router()
 
@@ -15,7 +16,19 @@ class ReportState(StatesGroup):
 
 @router.message(Command("report"))
 async def report_start(message: types.Message, state: FSMContext):
-    await message.answer("Write your report:")
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="⬅ Back to Menu", callback_data="menu:back")]
+    ])
+    await message.answer("Write your report:", reply_markup=kb)
+    await state.set_state(ReportState.waiting_for_text)
+
+
+async def start_report_from_menu(message: types.Message, state: FSMContext):
+    """Called from menu - edits the existing message"""
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="⬅ Back to Menu", callback_data="menu:back")]
+    ])
+    await message.edit_text("Write your report:", reply_markup=kb)
     await state.set_state(ReportState.waiting_for_text)
 
 

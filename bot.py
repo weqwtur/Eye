@@ -27,6 +27,7 @@ dp = Dispatcher(storage=MemoryStorage())
 from commands.start import router as start_router
 from media_id import router as media_id_router
 
+from commands.menu import router as menu_router, main_menu_kb, other_menu_kb, back_kb
 from commands.top.top import router as top_router
 from commands.media.media import router as media_menu_router
 from commands.facts import router as facts_router
@@ -51,6 +52,7 @@ dp.include_router(report_router)
 
 dp.include_router(media_id_router)
 
+dp.include_router(menu_router)
 dp.include_router(top_router)
 dp.include_router(media_menu_router)
 dp.include_router(facts_router)

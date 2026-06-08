@@ -52,8 +52,24 @@ async def cmd_top(message: types.Message):
         icon_custom_emoji_id="5346269127059196142",
         callback_data="refresh_eyes"
     )
+    kb.row(types.InlineKeyboardButton(text="⬅ Back to Menu", callback_data="menu:back"))
 
     await message.answer(text, reply_markup=kb.as_markup())
+
+
+async def show_top_in_menu(message: types.Message):
+    """Called from menu - edits the existing message"""
+    text = await render_top()
+
+    kb = InlineKeyboardBuilder()
+    kb.button(
+            text=" ",
+            icon_custom_emoji_id="5346269127059196142",
+            callback_data="refresh_eyes"
+        )
+    kb.row(types.InlineKeyboardButton(text="⬅ Back to Menu", callback_data="menu:back"))
+
+    await message.edit_text(text, reply_markup=kb.as_markup())
 
 
 @router.callback_query(F.data == "refresh_eyes")
@@ -70,6 +86,7 @@ async def refresh_eyes(callback: types.CallbackQuery):
             icon_custom_emoji_id="5346269127059196142",
             callback_data="refresh_eyes"
         )
+        kb.row(types.InlineKeyboardButton(text="⬅ Back to Menu", callback_data="menu:back"))
 
         await callback.message.edit_text(text, reply_markup=kb.as_markup())
     

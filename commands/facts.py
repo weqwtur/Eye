@@ -1,6 +1,7 @@
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.filters import Command
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 import random
 
 router = Router()
@@ -359,7 +360,7 @@ EYE_FACTS = [
 random.shuffle(EYE_FACTS)
 
 
-def get_keyboard(current_index: int, total_facts: int) -> InlineKeyboardMarkup:
+def get_keyboard(current_index: int, total_facts: int, show_back: bool = False) -> InlineKeyboardMarkup:
     buttons = []
     
     prev_index = current_index - 1
@@ -367,13 +368,16 @@ def get_keyboard(current_index: int, total_facts: int) -> InlineKeyboardMarkup:
     
     row = []
     if current_index > 0:
-        row.append(InlineKeyboardButton(text="⭠", callback_data=f"fact_{prev_index}"))
+        row.append(InlineKeyboardButton(text="⬅", callback_data=f"fact_{prev_index}"))
         
     if current_index < total_facts - 1:
         row.append(InlineKeyboardButton(text="⭢", callback_data=f"fact_{next_index}"))
         
     if row:
         buttons.append(row)
+    
+    if show_back:
+        buttons.append([InlineKeyboardButton(text="⬅ Back to Menu", callback_data="menu:back")])
         
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
@@ -391,8 +395,15 @@ def format_fact_message(fact_index: int) -> str:
 @router.message(Command("facts"))
 async def start_facts(message: Message):
     text = format_fact_message(0)
-    keyboard = get_keyboard(0, len(EYE_FACTS))
+    keyboard = get_keyboard(0, len(EYE_FACTS), show_back=False)
     await message.answer(text, reply_markup=keyboard, parse_mode="HTML", disable_web_page_preview=True)
+
+
+async def cmd_facts(message: Message):
+    """Called from menu callback - edits the existing message"""
+    text = format_fact_message(0)
+    keyboard = get_keyboard(0, len(EYE_FACTS), show_back=True)
+    await message.edit_text(text=text, reply_markup=keyboard, parse_mode="HTML", disable_web_page_preview=True)
 
 
 @router.callback_query(F.data.startswith("fact_"))
@@ -401,7 +412,7 @@ async def turn_fact_page(callback: CallbackQuery):
     total_facts = len(EYE_FACTS)
     
     text = format_fact_message(target_index)
-    keyboard = get_keyboard(target_index, total_facts)
+    keyboard = get_keyboard(target_index, total_facts, show_back=True)
     
     try:
         await callback.message.edit_text(

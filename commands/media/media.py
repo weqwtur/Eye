@@ -25,12 +25,21 @@ def media_menu_keyboard():
        text="📤 Suggest media",
        callback_data="suggest_media"
    ))
+   kb.row(types.InlineKeyboardButton(
+       text="⬅ Back to Menu",
+       callback_data="menu:back"
+   ))
    return kb.as_markup()
 
 
 @router.message(Command("media"))
 async def media_menu(message: types.Message):
    await message.answer("📁 Choose media:", reply_markup=media_menu_keyboard())
+
+
+async def cmd_media(message: types.Message):
+   """Called from menu - edits the existing message"""
+   await message.edit_text("📁 Choose media:", reply_markup=media_menu_keyboard())
 
 
 @router.callback_query(F.data == "suggest_media")
