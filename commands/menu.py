@@ -77,7 +77,9 @@ async def cb_other(call: CallbackQuery):
 
 @router.callback_query(F.data == "menu:diseases", F.message.chat.type == "private")
 async def cb_diseases(call: CallbackQuery):
-    await call.answer("🔬 Diseases — coming soon!", show_alert=True)
+    from commands.diseases import show_diseases_in_menu
+    await call.answer()
+    await show_diseases_in_menu(call.message)
 
 
 @router.callback_query(F.data == "menu:sense", F.message.chat.type == "private")
