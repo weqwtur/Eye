@@ -13,7 +13,7 @@ router = Router()
 GIF_ID = os.getenv("GIF_ID")
 
 
-@router.message(Command("start"))
+@router.message(Command("start"), F.chat.type == "private")
 async def start(message: types.Message):
     user_id = message.from_user.id
 
@@ -39,7 +39,7 @@ async def start(message: types.Message):
     await gif_msg.edit_reply_markup(reply_markup=kb.as_markup())
 
 
-@router.callback_query(F.data.startswith("click:"))
+@router.callback_query(F.data.startswith("click:"), F.chat.type == "private")
 async def click_handler(callback: types.CallbackQuery):
     _, counter_msg_id = callback.data.split(":")
     counter_msg_id = int(counter_msg_id)

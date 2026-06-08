@@ -26,7 +26,7 @@ GITHUB_MESSAGE = (
 )
 
 
-@router.message(Command("github"))
+@router.message(Command("github"), F.chat.type == "private")
 async def cmd_github(message: types.Message):
    builder = InlineKeyboardBuilder()
    builder.button(

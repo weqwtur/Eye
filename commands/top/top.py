@@ -42,7 +42,7 @@ async def render_top():
         return "❌ Error loading the top"
 
 
-@router.message(Command("eyes"))
+@router.message(Command("eyes"), F.chat.type == "private")
 async def cmd_top(message: types.Message):
     text = await render_top()
 
@@ -72,7 +72,7 @@ async def show_top_in_menu(message: types.Message):
     await message.edit_text(text, reply_markup=kb.as_markup())
 
 
-@router.callback_query(F.data == "refresh_eyes")
+@router.callback_query(F.data == "refresh_eyes", F.chat.type == "private")
 async def refresh_eyes(callback: types.CallbackQuery):
     
     await callback.answer("Updating...", show_alert=False)
@@ -94,6 +94,6 @@ async def refresh_eyes(callback: types.CallbackQuery):
         logger.error(f"Error in refresh_eyes: {e}")
 
 
-@router.message(F.text == "eyes")
+@router.message(F.text == "eyes", F.chat.type == "private")
 async def stats_button(message: types.Message):
     await cmd_top(message)
