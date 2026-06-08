@@ -6,7 +6,7 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 router = Router()
 logger = logging.getLogger(__name__)
 
-DISEASES_URL = "https://t.me/WhatAnEyeBot/diseases"
+DISEASES_URL = "https://www.nei.nih.gov/eye-health-information/eye-conditions-and-diseases"
 
 DISEASES_MESSAGE = (
    "<b>Diseases and Conditions</b>"
@@ -16,7 +16,7 @@ DISEASES_MESSAGE = (
 async def show_diseases_in_menu(message: types.Message):
    builder = InlineKeyboardBuilder()
    builder.button(
-       text="Open Website",
+       text="Website",
        url=DISEASES_URL
    )
    builder.row(InlineKeyboardButton(text="⬅ Back to Menu", callback_data="menu:back"))
