@@ -417,8 +417,3 @@ async def turn_fact_page(callback: CallbackQuery):
         pass
         
     await callback.answer()
-
-
-
-
-

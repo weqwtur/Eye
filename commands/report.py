@@ -15,12 +15,17 @@ class ReportState(StatesGroup):
 
 
 async def start_report_from_menu(message: types.Message, state: FSMContext):
-    """Called from menu - edits the existing message"""
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="⬅ Back to Menu", callback_data="menu:back")]
     ])
     await message.edit_text("Write your report:", reply_markup=kb)
     await state.set_state(ReportState.waiting_for_text)
+
+
+@router.callback_query(F.data == "menu:back")
+async def back_to_menu(callback: types.CallbackQuery, state: FSMContext):
+    await state.clear()
+    await callback.message.edit_text("You are back in menu.")
 
 
 @router.message(ReportState.waiting_for_text, F.chat.type == "private")
