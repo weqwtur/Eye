@@ -31,6 +31,15 @@ def media_menu_keyboard():
     return kb.as_markup()
 
 
+def suggest_back_keyboard():
+    kb = InlineKeyboardBuilder()
+    kb.row(types.InlineKeyboardButton(
+        text="⬅ Back to Menu",
+        callback_data="menu:back"
+    ))
+    return kb.as_markup()
+
+
 async def cmd_media(message: types.Message):
     await message.edit_text("📁 Choose media:", reply_markup=media_menu_keyboard())
 
@@ -39,7 +48,7 @@ async def cmd_media(message: types.Message):
 async def suggest_media_start(callback: types.CallbackQuery, state: FSMContext):
     await state.set_state(MediaSuggest.waiting_for_link)
     await state.update_data(menu_message_id=callback.message.message_id)
-    await callback.message.edit_text("📤 Send a link to your media:")
+    await callback.message.edit_text("📤 Send a link to your media:", reply_markup=suggest_back_keyboard())
     await callback.answer()
 
 
