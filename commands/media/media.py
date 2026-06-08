@@ -55,7 +55,8 @@ async def suggest_media_start(callback: types.CallbackQuery, state: FSMContext):
 @router.callback_query(F.data == "menu:back", F.message.chat.type == "private")
 async def back_to_menu(callback: types.CallbackQuery, state: FSMContext):
     await state.clear()
-    await callback.message.edit_text("📁 Choose media:", reply_markup=media_menu_keyboard())
+    from commands.menu import main_menu_kb
+    await callback.message.edit_text("<b>Menu</b>", reply_markup=main_menu_kb(), parse_mode="HTML")
     await callback.answer()
 
 
