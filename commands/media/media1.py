@@ -1,5 +1,4 @@
 from aiogram import Router, types, F
-from aiogram.filters import Command
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 router = Router()
@@ -22,11 +21,6 @@ MEDIA = [
     "AgACAgIAAxkBAAOSahPKZlgSZQmu3mMyga7P3jcVSrcAAjUYaxvFuaBIbsT3yXNJ7LcBAAMCAAN4AAM7BA",
     "AgACAgIAAxkBAAOUahPKaXSLTlqm76IorPEiRVC0pEgAAjYYaxvFuaBIrQd4ufLSWKABAAMCAAN4AAM7BA"
 ]
-
-
-@router.message(Command("media1"))
-async def media1_command(message: types.Message):
-    await send_media(message, index=0)
 
 
 async def media1_start(message: types.Message):

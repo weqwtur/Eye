@@ -1,6 +1,5 @@
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram.filters import Command
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 import random
 
@@ -390,13 +389,6 @@ def format_fact_message(fact_index: int) -> str:
         f"<i>{fact['text']}</i>\n\n"
         f"<b>From:</b> <a href=\"{fact['source']}\">Source</a>"
     )
-
-
-@router.message(Command("facts"), F.chat.type == "private")
-async def start_facts(message: Message):
-    text = format_fact_message(0)
-    keyboard = get_keyboard(0, len(EYE_FACTS), show_back=False)
-    await message.answer(text, reply_markup=keyboard, parse_mode="HTML", disable_web_page_preview=True)
 
 
 async def cmd_facts(message: Message):

@@ -1,6 +1,5 @@
 import logging
 from aiogram import Router, types, F
-from aiogram.filters import Command
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 router = Router()
@@ -37,13 +36,9 @@ MEDIA = [
 ]
 
 
-@router.message(Command("media9"))
-async def media9_command(message: types.Message):
-    logger.info("📸 /media9 command received!")
-    await media9_start(message)
-
-
 async def media9_start(message: types.Message):
+    await send_media(message, index=0)
+
     await send_media(message, index=0)
 
 

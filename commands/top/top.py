@@ -1,5 +1,4 @@
 from aiogram import Router, types, F
-from aiogram.filters import Command
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from sqlalchemy import select, desc
@@ -42,20 +41,6 @@ async def render_top():
         return "❌ Error loading the top"
 
 
-@router.message(Command("eyes"), F.chat.type == "private")
-async def cmd_top(message: types.Message):
-    text = await render_top()
-
-    kb = InlineKeyboardBuilder()
-    kb.button(
-        text=" ",
-        icon_custom_emoji_id="5346269127059196142",
-        callback_data="refresh_eyes"
-    )
-    kb.row(types.InlineKeyboardButton(text="⬅ Back to Menu", callback_data="menu:back"))
-
-    await message.answer(text, reply_markup=kb.as_markup())
-
 
 async def show_top_in_menu(message: types.Message):
     """Called from menu - edits the existing message"""
@@ -94,6 +79,3 @@ async def refresh_eyes(callback: types.CallbackQuery):
         logger.error(f"Error in refresh_eyes: {e}")
 
 
-@router.message(F.text == "eyes", F.chat.type == "private")
-async def stats_button(message: types.Message):
-    await cmd_top(message)

@@ -14,15 +14,6 @@ class ReportState(StatesGroup):
     waiting_for_text = State()
 
 
-@router.message(Command("report"), F.chat.type == "private")
-async def report_start(message: types.Message, state: FSMContext):
-    kb = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="⬅ Back to Menu", callback_data="menu:back")]
-    ])
-    await message.answer("Write your report:", reply_markup=kb)
-    await state.set_state(ReportState.waiting_for_text)
-
-
 async def start_report_from_menu(message: types.Message, state: FSMContext):
     """Called from menu - edits the existing message"""
     kb = InlineKeyboardMarkup(inline_keyboard=[

@@ -1,6 +1,5 @@
 import logging
 from aiogram import Router, types, F, Bot
-from aiogram.filters import Command
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
@@ -30,11 +29,6 @@ def media_menu_keyboard():
        callback_data="menu:back"
    ))
    return kb.as_markup()
-
-
-@router.message(Command("media"), F.chat.type == "private")
-async def media_menu(message: types.Message):
-   await message.answer("📁 Choose media:", reply_markup=media_menu_keyboard())
 
 
 async def cmd_media(message: types.Message):
