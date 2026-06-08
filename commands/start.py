@@ -39,7 +39,7 @@ async def start(message: types.Message):
     await gif_msg.edit_reply_markup(reply_markup=kb.as_markup())
 
 
-@router.callback_query(F.data.startswith("click:"), F.chat.type == "private")
+@router.callback_query(F.data.startswith("click:"), F.message.chat.type == "private")
 async def click_handler(callback: types.CallbackQuery):
     _, counter_msg_id = callback.data.split(":")
     counter_msg_id = int(counter_msg_id)

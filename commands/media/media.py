@@ -36,7 +36,7 @@ async def cmd_media(message: types.Message):
    await message.edit_text("📁 Choose media:", reply_markup=media_menu_keyboard())
 
 
-@router.callback_query(F.data == "suggest_media", F.chat.type == "private")
+@router.callback_query(F.data == "suggest_media", F.message.chat.type == "private")
 async def suggest_media_start(callback: types.CallbackQuery, state: FSMContext):
    await state.set_state(MediaSuggest.waiting_for_link)
    await state.update_data(menu_message_id=callback.message.message_id)
@@ -72,7 +72,7 @@ async def suggest_media_receive(message: types.Message, state: FSMContext, bot: 
    )
 
 
-@router.callback_query(F.data.startswith("open_media:"), F.chat.type == "private")
+@router.callback_query(F.data.startswith("open_media:"), F.message.chat.type == "private")
 async def open_media(callback: types.CallbackQuery):
    media_id = int(callback.data.split(":")[1])
 

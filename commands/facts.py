@@ -398,7 +398,7 @@ async def cmd_facts(message: Message):
     await message.edit_text(text=text, reply_markup=keyboard, parse_mode="HTML", disable_web_page_preview=True)
 
 
-@router.callback_query(F.data.startswith("fact_"), F.chat.type == "private")
+@router.callback_query(F.data.startswith("fact_"), F.message.chat.type == "private")
 async def turn_fact_page(callback: CallbackQuery):
     target_index = int(callback.data.split("_")[1])
     total_facts = len(EYE_FACTS)

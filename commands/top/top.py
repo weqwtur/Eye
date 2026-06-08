@@ -57,7 +57,7 @@ async def show_top_in_menu(message: types.Message):
     await message.edit_text(text, reply_markup=kb.as_markup())
 
 
-@router.callback_query(F.data == "refresh_eyes", F.chat.type == "private")
+@router.callback_query(F.data == "refresh_eyes", F.message.chat.type == "private")
 async def refresh_eyes(callback: types.CallbackQuery):
     
     await callback.answer("Updating...", show_alert=False)

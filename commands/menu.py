@@ -54,7 +54,7 @@ async def cmd_menu(message: Message):
 
 
 
-@router.callback_query(F.data == "menu:back", F.chat.type == "private")
+@router.callback_query(F.data == "menu:back", F.message.chat.type == "private")
 async def cb_back(call: CallbackQuery):
     await call.message.edit_text(
         "<b>Menu</b>",
@@ -64,7 +64,7 @@ async def cb_back(call: CallbackQuery):
     await call.answer()
 
 
-@router.callback_query(F.data == "menu:other", F.chat.type == "private")
+@router.callback_query(F.data == "menu:other", F.message.chat.type == "private")
 async def cb_other(call: CallbackQuery):
     await call.message.edit_text(
         "<b>Other</b>",
@@ -75,50 +75,50 @@ async def cb_other(call: CallbackQuery):
 
 
 
-@router.callback_query(F.data == "menu:diseases", F.chat.type == "private")
+@router.callback_query(F.data == "menu:diseases", F.message.chat.type == "private")
 async def cb_diseases(call: CallbackQuery):
     await call.answer("🔬 Diseases — coming soon!", show_alert=True)
 
 
-@router.callback_query(F.data == "menu:sense", F.chat.type == "private")
+@router.callback_query(F.data == "menu:sense", F.message.chat.type == "private")
 async def cb_sense(call: CallbackQuery):
     await call.answer("👁️ Sense — coming soon!", show_alert=True)
 
 
-@router.callback_query(F.data == "menu:language", F.chat.type == "private")
+@router.callback_query(F.data == "menu:language", F.message.chat.type == "private")
 async def cb_language(call: CallbackQuery):
     await call.answer("🌐 Language — coming soon!", show_alert=True)
 
 
-@router.callback_query(F.data == "menu:media", F.chat.type == "private")
+@router.callback_query(F.data == "menu:media", F.message.chat.type == "private")
 async def cb_media(call: CallbackQuery):
     from commands.media.media import cmd_media
     await call.answer()
     await cmd_media(call.message)
 
 
-@router.callback_query(F.data == "menu:facts", F.chat.type == "private")
+@router.callback_query(F.data == "menu:facts", F.message.chat.type == "private")
 async def cb_facts(call: CallbackQuery):
     from commands.facts import cmd_facts
     await call.answer()
     await cmd_facts(call.message)
 
 
-@router.callback_query(F.data == "menu:top", F.chat.type == "private")
+@router.callback_query(F.data == "menu:top", F.message.chat.type == "private")
 async def cb_top(call: CallbackQuery):
     from commands.top.top import show_top_in_menu
     await call.answer()
     await show_top_in_menu(call.message)
 
 
-@router.callback_query(F.data == "menu:github", F.chat.type == "private")
+@router.callback_query(F.data == "menu:github", F.message.chat.type == "private")
 async def cb_github(call: CallbackQuery):
     from commands.github import show_github_in_menu
     await call.answer()
     await show_github_in_menu(call.message)
 
 
-@router.callback_query(F.data == "menu:report", F.chat.type == "private")
+@router.callback_query(F.data == "menu:report", F.message.chat.type == "private")
 async def cb_report(call: CallbackQuery, state: FSMContext):
     from commands.report import start_report_from_menu
     await call.answer()
