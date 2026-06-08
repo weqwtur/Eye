@@ -1,5 +1,4 @@
 import os
-
 from aiogram import Router, types, F
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
@@ -17,27 +16,22 @@ class ReportState(StatesGroup):
 
 def report_back_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="⬅ Back to Menu", callback_data="menu:back")]
+        [InlineKeyboardButton(text="⭠ Back", callback_data="menu:back")]
     ])
 
 
 async def start_report_from_menu(message: types.Message, state: FSMContext):
+    await state.update_data(menu_message_id=message.message_id, prev_menu="other")
     await message.edit_text("Write your report:", reply_markup=report_back_keyboard())
     await state.set_state(ReportState.waiting_for_text)
 
 
-@router.callback_query(F.data == "menu:back", F.message.chat.type == "private")
-async def back_to_menu(callback: types.CallbackQuery, state: FSMContext):
-    await state.clear()
-    from commands.menu import main_menu_kb
-    await callback.message.edit_text("<b>Menu</b>", reply_markup=main_menu_kb(), parse_mode="HTML")
-    await callback.answer()
-
-
 @router.message(ReportState.waiting_for_text, F.chat.type == "private")
 async def receive_report(message: types.Message, state: FSMContext):
-    user = message.from_user
+    data = await state.get_data()
+    menu_message_id = data.get("menu_message_id")
 
+    user = message.from_user
     text = message.text or message.caption or ""
     photo = message.photo[-1].file_id if message.photo else None
     doc = message.document.file_id if message.document else None
@@ -45,7 +39,7 @@ async def receive_report(message: types.Message, state: FSMContext):
     admin_header = (
         f"Message:\n"
         f"{text or '[media]'}\n\n"
-        f"<code>/reply {user.id}</code> "
+        f"<code>/reply {user.id}</code>"
     )
 
     await message.bot.send_message(ADMIN_ID, admin_header)
@@ -58,6 +52,17 @@ async def receive_report(message: types.Message, state: FSMContext):
     await state.clear()
     await message.answer("Your report has been sent.")
 
+    if menu_message_id:
+        from commands.menu import other_menu_kb
+
+        await message.bot.edit_message_text(
+            chat_id=message.chat.id,
+            message_id=menu_message_id,
+            text="<b>Other</b>",
+            parse_mode="HTML",
+            reply_markup=other_menu_kb()
+        )
+
 
 @router.message(Command("reply"))
 async def admin_reply(message: types.Message):
@@ -65,7 +70,6 @@ async def admin_reply(message: types.Message):
         return
 
     parts = message.text.split(maxsplit=2)
-
     if len(parts) < 3:
         await message.answer("Usage: /reply <user_id> <text>")
         return

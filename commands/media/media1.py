@@ -33,7 +33,7 @@ async def send_media(message_or_callback, index: int):
     kb.button(text=" ", url=TT_LINK)
 
     if index > 0:
-        kb.button(text="⬅", callback_data=f"media1:{index-1}")
+        kb.button(text="⭠", callback_data=f"media1:{index-1}")
 
     if index < len(MEDIA) - 1:
         kb.button(text="⭢", callback_data=f"media1:{index+1}")
@@ -63,7 +63,7 @@ async def media1_switch(callback: types.CallbackQuery):
     kb.button(text=" ", url=TT_LINK)
 
     if index > 0:
-        kb.button(text="⬅", callback_data=f"media1:{index-1}")
+        kb.button(text="⭠", callback_data=f"media1:{index-1}")
 
     if index < len(MEDIA) - 1:
         kb.button(text="⭢", callback_data=f"media1:{index+1}")

@@ -26,13 +26,12 @@ GITHUB_MESSAGE = (
 
 
 async def show_github_in_menu(message: types.Message):
-   """Called from menu - edits the existing message"""
    builder = InlineKeyboardBuilder()
    builder.button(
        text="Open Repository",
        url=GITHUB_URL
    )
-   builder.row(InlineKeyboardButton(text="⬅ Back to Menu", callback_data="menu:back"))
+   builder.row(InlineKeyboardButton(text="⭠ Back to Menu", callback_data="menu:back"))
 
    await message.edit_text(
        GITHUB_MESSAGE,

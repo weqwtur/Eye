@@ -1,6 +1,6 @@
-from aiogram import Router, F
-from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram import Router, types, F
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 import random
 
 router = Router()
@@ -361,23 +361,19 @@ random.shuffle(EYE_FACTS)
 
 def get_keyboard(current_index: int, total_facts: int, show_back: bool = False) -> InlineKeyboardMarkup:
     buttons = []
-    
-    prev_index = current_index - 1
-    next_index = current_index + 1
-    
     row = []
+
     if current_index > 0:
-        row.append(InlineKeyboardButton(text="⬅", callback_data=f"fact_{prev_index}"))
-        
+        row.append(InlineKeyboardButton(text="⭠", callback_data=f"fact_{current_index - 1}"))
     if current_index < total_facts - 1:
-        row.append(InlineKeyboardButton(text="⭢", callback_data=f"fact_{next_index}"))
-        
+        row.append(InlineKeyboardButton(text="⭢", callback_data=f"fact_{current_index + 1}"))
+
     if row:
         buttons.append(row)
-    
+
     if show_back:
-        buttons.append([InlineKeyboardButton(text="⬅ Back to Menu", callback_data="menu:back")])
-        
+        buttons.append([InlineKeyboardButton(text="⭠ Back", callback_data="menu:back")])
+
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
@@ -391,29 +387,33 @@ def format_fact_message(fact_index: int) -> str:
     )
 
 
-async def cmd_facts(message: Message):
-    """Called from menu callback - edits the existing message"""
+async def cmd_facts(message: types.Message):
     text = format_fact_message(0)
     keyboard = get_keyboard(0, len(EYE_FACTS), show_back=True)
-    await message.edit_text(text=text, reply_markup=keyboard, parse_mode="HTML", disable_web_page_preview=True)
+    await message.edit_text(
+        text=text,
+        reply_markup=keyboard,
+        parse_mode="HTML",
+        disable_web_page_preview=True
+    )
 
 
 @router.callback_query(F.data.startswith("fact_"), F.message.chat.type == "private")
-async def turn_fact_page(callback: CallbackQuery):
-    target_index = int(callback.data.split("_")[1])
-    total_facts = len(EYE_FACTS)
-    
-    text = format_fact_message(target_index)
-    keyboard = get_keyboard(target_index, total_facts, show_back=True)
-    
+async def turn_fact_page(callback: types.CallbackQuery):
+    index = int(callback.data.split("_")[1])
+    total = len(EYE_FACTS)
+
+    text = format_fact_message(index)
+    keyboard = get_keyboard(index, total, show_back=True)
+
     try:
         await callback.message.edit_text(
-            text=text, 
-            reply_markup=keyboard, 
+            text=text,
+            reply_markup=keyboard,
             parse_mode="HTML",
             disable_web_page_preview=True
         )
     except Exception:
         pass
-        
+
     await callback.answer()

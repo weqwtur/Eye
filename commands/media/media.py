@@ -15,48 +15,63 @@ class MediaSuggest(StatesGroup):
     waiting_for_link = State()
 
 
+
 def media_menu_keyboard():
     kb = InlineKeyboardBuilder()
+
+    # 9 media buttons
     for i in range(1, 10):
-        kb.button(text=f"{i}", callback_data=f"open_media:{i}")
+        kb.button(text=str(i), callback_data=f"open_media:{i}")
     kb.adjust(3, 3, 3)
-    kb.row(types.InlineKeyboardButton(
-        text="📤 Suggest media",
-        callback_data="suggest_media"
-    ))
-    kb.row(types.InlineKeyboardButton(
-        text="⬅ Back to Menu",
-        callback_data="menu:back"
-    ))
+
+    kb.row(
+        types.InlineKeyboardButton(
+            text="Suggest media",
+            callback_data="suggest_media"
+        )
+    )
+
+    # universal back (handled in menu.py)
+    kb.row(
+        types.InlineKeyboardButton(
+            text="⭠ Back",
+            callback_data="menu:back"
+        )
+    )
+
     return kb.as_markup()
 
 
 def suggest_back_keyboard():
     kb = InlineKeyboardBuilder()
-    kb.row(types.InlineKeyboardButton(
-        text="⬅ Back to Menu",
-        callback_data="menu:back"
-    ))
+    kb.row(
+        types.InlineKeyboardButton(
+            text="⭠ Back",
+            callback_data="menu:back"
+        )
+    )
     return kb.as_markup()
 
 
+
 async def cmd_media(message: types.Message):
-    await message.edit_text("📁 Choose media:", reply_markup=media_menu_keyboard())
+    await message.edit_text(
+        "📁 Choose media:",
+        reply_markup=media_menu_keyboard()
+    )
+
 
 
 @router.callback_query(F.data == "suggest_media", F.message.chat.type == "private")
 async def suggest_media_start(callback: types.CallbackQuery, state: FSMContext):
     await state.set_state(MediaSuggest.waiting_for_link)
-    await state.update_data(menu_message_id=callback.message.message_id)
-    await callback.message.edit_text("📤 Send a link to your media:", reply_markup=suggest_back_keyboard())
-    await callback.answer()
 
+    await state.update_data(menu_message_id=callback.message.message_id, prev_menu="media")
 
-@router.callback_query(F.data == "menu:back", F.message.chat.type == "private")
-async def back_to_menu(callback: types.CallbackQuery, state: FSMContext):
-    await state.clear()
-    from commands.menu import main_menu_kb
-    await callback.message.edit_text("<b>Menu</b>", reply_markup=main_menu_kb(), parse_mode="HTML")
+    await callback.message.edit_text(
+        "📤 Send a link to your media:",
+        reply_markup=suggest_back_keyboard()
+    )
     await callback.answer()
 
 
@@ -78,7 +93,7 @@ async def suggest_media_receive(message: types.Message, state: FSMContext, bot: 
 
     await state.clear()
 
-    await message.reply("✅ Thank you! Your link to the media file has been sent for review.")
+    await message.reply("✅ Thank you! Your link has been sent for review.")
 
     await bot.edit_message_text(
         chat_id=message.chat.id,
@@ -88,36 +103,15 @@ async def suggest_media_receive(message: types.Message, state: FSMContext, bot: 
     )
 
 
+
 @router.callback_query(F.data.startswith("open_media:"), F.message.chat.type == "private")
 async def open_media(callback: types.CallbackQuery):
     media_id = int(callback.data.split(":")[1])
 
-    if media_id == 1:
-        from commands.media.media1 import media1_start
-        return await media1_start(callback.message)
-    if media_id == 2:
-        from commands.media.media2 import media2_start
-        return await media2_start(callback.message)
-    if media_id == 3:
-        from commands.media.media3 import media3_start
-        return await media3_start(callback.message)
-    if media_id == 4:
-        from commands.media.media4 import media4_start
-        return await media4_start(callback.message)
-    if media_id == 5:
-        from commands.media.media5 import media5_start
-        return await media5_start(callback.message)
-    if media_id == 6:
-        from commands.media.media6 import media6_start
-        return await media6_start(callback.message)
-    if media_id == 7:
-        from commands.media.media7 import media7_start
-        return await media7_start(callback.message)
-    if media_id == 8:
-        from commands.media.media8 import media8_start
-        return await media8_start(callback.message)
-    if media_id == 9:
-        from commands.media.media9 import media9_start
-        return await media9_start(callback.message)
+    module_path = f"commands.media.media{media_id}"
 
-    await callback.answer("This media is not added yet")
+    try:
+        module = __import__(module_path, fromlist=["media_start"])
+        return await module.media_start(callback.message)
+    except Exception:
+        await callback.answer("This media is not added yet")
