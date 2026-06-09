@@ -1,5 +1,5 @@
 import logging
-from aiogram import Router, types, F
+from aiogram import Router, Bot, types, F
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
@@ -76,7 +76,7 @@ async def suggest_media_start(callback: types.CallbackQuery, state: FSMContext):
 
 
 @router.message(MediaSuggest.waiting_for_link, F.text, F.chat.type == "private")
-async def suggest_media_receive(message: types.Message, state: FSMContext, bot: types.Bot):
+async def suggest_media_receive(message: types.Message, state: FSMContext, bot: Bot):
     data = await state.get_data()
     menu_message_id = data.get("menu_message_id")
 
