@@ -61,6 +61,14 @@ async def on_startup():
     logger.info("✅ The database is initialized")
 
 
+async def flush_pending_updates() -> None:
+    logger.info("🧹 Flushing pending updates before polling")
+    updates = await bot.get_updates(offset=-1, timeout=0)
+    if updates:
+        last_update_id = updates[-1].update_id
+        await bot.get_updates(offset=last_update_id + 1, timeout=0)
+
+
 async def main():
     dp.startup.register(on_startup)
 
@@ -77,6 +85,7 @@ async def main():
     logger.info("🚀 BOT STARTED - READY FOR COMMANDS")
     logger.info("=" * 50)
 
+    await flush_pending_updates()
     await dp.start_polling(bot)
 
 
