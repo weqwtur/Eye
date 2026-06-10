@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Hit the Eye</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; }
+
+  body {
+    background: #080810;
+    font-family: 'Courier New', monospace;
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+  }
+
+  #game-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  #ui {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 20px 24px;
+    pointer-events: none;
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: #e8e0f0;
+    letter-spacing: 2px;
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 9px;
+    color: #5a4a6a;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  #lives {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .life {
+    font-size: 16px;
+    transition: opacity 0.3s;
+  }
+  .life.lost { opacity: 0.15; filter: grayscale(1); }
+
+  /* Screens */
+  .screen {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(8, 8, 16, 0.96);
+    z-index: 10;
+  }
+
+  .screen.hidden { display: none; }
+
+  .eye-symbol {
+    font-size: 72px;
+    margin-bottom: 8px;
+    animation: breathe 3s ease-in-out infinite;
+  }
+
+  @keyframes breathe {
+    0%, 100% { transform: scale(1); opacity: 0.9; }
+    50% { transform: scale(1.08); opacity: 1; }
+  }
+
+  .screen-title {
+    font-size: 13px;
+    letter-spacing: 6px;
+    color: #7a5a9a;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .screen-big {
+    font-size: 38px;
+    font-weight: 700;
+    color: #e8e0f0;
+    letter-spacing: 3px;
+    margin-bottom: 32px;
+  }
+
+  .screen-sub {
+    font-size: 11px;
+    color: #4a3a5a;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 48px;
+    text-align: center;
+    line-height: 1.8;
+    max-width: 260px;
+  }
+
+  .btn {
+    background: transparent;
+    border: 1px solid #5a3a8a;
+    color: #c0a0e0;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    padding: 14px 36px;
+    cursor: pointer;
+    transition: all 0.2s;
+    outline: none;
+  }
+
+  .btn:active {
+    background: #5a3a8a22;
+    border-color: #9a6acc;
+    color: #e0c0ff;
+  }
+
+  #score-display {
+    font-size: 64px;
+    font-weight: 700;
+    color: #e8e0f0;
+    letter-spacing: 4px;
+    margin-bottom: 8px;
+  }
+
+  #score-label {
+    font-size: 10px;
+    color: #5a4a6a;
+    letter-spacing: 4px;
+    margin-bottom: 4px;
+  }
+
+  #best-display {
+    font-size: 13px;
+    color: #7a5a9a;
+    letter-spacing: 3px;
+    margin-bottom: 40px;
+  }
+
+  #combo-display {
+    position: absolute;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: #9a6acc;
+    text-transform: uppercase;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+</style>
+</head>
+<body>
+
+<div id="game-container">
+  <canvas id="canvas"></canvas>
+
+  <div id="ui">
+    <div class="stat">
+      <div class="stat-value" id="score-ui">0</div>
+      <div class="stat-label">score</div>
+    </div>
+    <div id="lives">
+      <span class="life" id="l1">👁</span>
+      <span class="life" id="l2">👁</span>
+      <span class="life" id="l3">👁</span>
+    </div>
+    <div class="stat">
+      <div class="stat-value" id="level-ui">1</div>
+      <div class="stat-label">level</div>
+    </div>
+  </div>
+
+  <div id="combo-display" style="opacity:0"></div>
+
+  <!-- Start screen -->
+  <div class="screen" id="start-screen">
+    <div class="eye-symbol">👁</div>
+    <div class="screen-title">telegram mini app</div>
+    <div class="screen-big">HIT THE EYE</div>
+    <div class="screen-sub">
+      hold to aim<br>
+      release to fire<br>
+      hit the pupil
+    </div>
+    <button class="btn" id="start-btn">[ focus ]</button>
+  </div>
+
+  <!-- Game over screen -->
+  <div class="screen hidden" id="over-screen">
+    <div class="eye-symbol" style="animation:none; opacity:0.3">👁</div>
+    <div class="screen-title">vision lost</div>
+    <div id="score-display">0</div>
+    <div id="score-label">SCORE</div>
+    <div id="best-display">best — 0</div>
+    <button class="btn" id="retry-btn">[ retry ]</button>
+  </div>
+</div>
+
+<script>
+// ── Telegram init ──────────────────────────────────────────────
+const tg = window.Telegram?.WebApp;
+if (tg) { 
+  tg.ready(); 
+  tg.expand(); 
+  tg.setBackgroundColor("#080810");
+  tg.setHeaderColor("#080810");
+}
+
+// ── Canvas setup ───────────────────────────────────────────────
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+// ── State ──────────────────────────────────────────────────────
+let state = 'idle';
+let score = 0;
+let best = parseInt(localStorage.getItem('hte_best') || '0');
+let bestLevel = parseInt(localStorage.getItem('hte_best_level') || '1');
+let lives = 3;
+let level = 1;
+let combo = 0;
+let frameId;
+
+// Eye
+let eye = { x: 0, y: 0, r: 52, pupilR: 18, vx: 0, vy: 0, phase: 0 };
+
+// Launcher
+let launcher = { x: 0, y: 0 };
+
+// Projectile
+let proj = { x: 0, y: 0, vx: 0, vy: 0, active: false, trail: [] };
+
+// Aim
+let aim = { active: false, startX: 0, startY: 0, curX: 0, curY: 0, power: 0 };
+
+// Particles + flashes
+let particles = [];
+let hitFlash = 0;
+let missFlash = 0;
+let comboAnim = 0;
+
+// ── Init ───────────────────────────────────────────────────────
+function initGame() {
+  score = 0;
+  lives = 3;
+  level = 1;
+  combo = 0;
+  proj.active = false;
+  proj.trail = [];
+  particles = [];
+  state = 'aiming';
+
+  launcher.x = canvas.width / 2;
+  launcher.y = canvas.height - 100;
+
+  spawnEye();
+  updateUI();
+  updateLives();
+}
+
+function spawnEye() {
+  const margin = 80;
+  eye.r = Math.max(34, 52 - Math.floor(level * 1.4));
+  eye.pupilR = Math.max(12, 18 - Math.floor(level * 0.9));
+  
+  eye.x = margin + Math.random() * (canvas.width - margin * 2);
+  eye.y = 100 + Math.random() * (canvas.height * 0.42);
+
+  const speed = 0.55 + level * 0.18;
+  const angle = Math.random() * Math.PI * 2;
+  eye.vx = Math.cos(angle) * speed;
+  eye.vy = Math.sin(angle) * speed * 0.45;
+  eye.phase = Math.random() * Math.PI * 2;
+}
+
+// ── Input (Pointer Events) ─────────────────────────────────────
+function onDown(ex, ey) {
+  if (state !== 'aiming') return;
+  aim.active = true;
+  aim.startX = ex;
+  aim.startY = ey;
+  aim.curX = ex;
+  aim.curY = ey;
+}
+
+function onMove(ex, ey) {
+  if (!aim.active) return;
+  aim.curX = ex;
+  aim.curY = ey;
+  const dx = aim.startX - ex;
+  const dy = aim.startY - ey;
+  aim.power = Math.min(1, Math.sqrt(dx*dx + dy*dy) / 140);
+}
+
+function onUp() {
+  if (!aim.active || state !== 'aiming') return;
+  aim.active = false;
+  fire();
+}
+
+canvas.addEventListener('pointerdown', e => onDown(e.clientX, e.clientY));
+canvas.addEventListener('pointermove', e => onMove(e.clientX, e.clientY));
+canvas.addEventListener('pointerup', onUp);
+canvas.addEventListener('pointercancel', onUp);
+
+// ── Fire ───────────────────────────────────────────────────────
+function fire() {
+  if (aim.power < 0.05) return;
+
+  const dx = aim.startX - aim.curX;
+  const dy = aim.startY - aim.curY;
+  const len = Math.sqrt(dx*dx + dy*dy) || 1;
+  const speed = aim.power * 22;
+
+  proj.x = launcher.x;
+  proj.y = launcher.y;
+  proj.vx = (dx / len) * speed;
+  proj.vy = (dy / len) * speed;
+  proj.active = true;
+  proj.trail = [];
+  state = 'flying';
+
+  if (tg) tg.HapticFeedback.impactOccurred('light');
+}
+
+// ── Update ─────────────────────────────────────────────────────
+function update() {
+  eye.phase += 0.012;
+  eye.x += eye.vx;
+  eye.y += eye.vy + Math.sin(eye.phase) * 0.4;
+
+  if (eye.x < eye.r || eye.x > canvas.width - eye.r) eye.vx *= -1;
+  if (eye.y < eye.r + 60 || eye.y > canvas.height * 0.6) eye.vy *= -1;
+
+  if (proj.active) {
+    proj.trail.push({ x: proj.x, y: proj.y, age: 0 });
+    if (proj.trail.length > 20) proj.trail.shift();
+    proj.trail.forEach(t => t.age++);
+
+    proj.vy += 0.18;
+    proj.x += proj.vx;
+    proj.y += proj.vy;
+
+    const dx = proj.x - eye.x;
+    const dy = proj.y - eye.y;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+
+    if (dist < eye.pupilR + 9) {
+      onHit('pupil');
+    } else if (dist < eye.r + 8) {
+      onHit('eye');
+    } else if (proj.y > canvas.height + 30 || proj.x < -30 || proj.x > canvas.width + 30) {
+      onMiss();
+    }
+  }
+
+  particles = particles.filter(p => p.life > 0);
+  particles.forEach(p => {
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.12;
+    p.life -= 2;
+    p.vx *= 0.97;
+  });
+
+  if (hitFlash > 0) hitFlash -= 3;
+  if (missFlash > 0) missFlash -= 3;
+  if (comboAnim > 0) comboAnim -= 2;
+}
+
+function onHit(zone) {
+  proj.active = false;
+  proj.trail = [];
+
+  const isPupil = zone === 'pupil';
+  const pts = isPupil ? (10 + combo * 5) : 3;
+
+  score += pts;
+  combo++;
+
+  spawnParticles(eye.x, eye.y, isPupil ? '#c090ff' : '#7050aa', isPupil ? 26 : 12);
+  hitFlash = isPupil ? 85 : 45;
+
+  if (tg) {
+    tg.HapticFeedback.impactOccurred(isPupil ? 'heavy' : 'medium');
+  }
+
+  if (combo >= 3) showCombo(combo);
+
+  level = 1 + Math.floor(score / 50);
+  spawnEye();
+  state = 'aiming';
+  updateUI();
+}
+
+function onMiss() {
+  proj.active = false;
+  proj.trail = [];
+  combo = 0;
+  lives--;
+  missFlash = 65;
+
+  if (tg) tg.HapticFeedback.notificationOccurred('error');
+  updateLives();
+
+  if (lives <= 0) gameOver();
+  else state = 'aiming';
+}
+
+function gameOver() {
+  state = 'dead';
+  let newBest = false;
+  if (score > best) {
+    best = score;
+    localStorage.setItem('hte_best', best);
+    newBest = true;
+  }
+  if (level > bestLevel) {
+    bestLevel = level;
+    localStorage.setItem('hte_best_level', bestLevel);
+  }
+
+  document.getElementById('score-display').textContent = score;
+  document.getElementById('best-display').textContent = `best — ${best}`;
+  
+  setTimeout(() => {
+    document.getElementById('over-screen').classList.remove('hidden');
+  }, 500);
+
+  if (tg) {
+    try { 
+      tg.sendData(JSON.stringify({ score, best, level, bestLevel })); 
+    } catch(e) {}
+  }
+}
+
+function showCombo(n) {
+  const el = document.getElementById('combo-display');
+  el.textContent = `×${n} COMBO`;
+  el.style.opacity = '1';
+  comboAnim = 110;
+}
+
+// Particles
+function spawnParticles(x, y, color, count) {
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 1.2 + Math.random() * 5.5;
+    particles.push({
+      x, y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 2.2,
+      life: 65 + Math.random() * 45,
+      r: 1.6 + Math.random() * 3.2,
+      color
+    });
+  }
+}
+
+// ── Draw functions (без змін у візуалі, тільки дрібні покращення) ──
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  if (hitFlash > 0) {
+    ctx.fillStyle = `rgba(140, 80, 220, ${hitFlash / 420})`;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+  if (missFlash > 0) {
+    ctx.fillStyle = `rgba(210, 50, 70, ${missFlash / 420})`;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+
+  drawEye();
+  drawTrail();
+  drawProjectile();
+  drawLauncher();
+  drawAimLine();
+  drawParticles();
+
+  if (comboAnim > 0) {
+    document.getElementById('combo-display').style.opacity = (comboAnim / 110).toString();
+  }
+}
+
+// (drawEye, drawLauncher, drawAimLine, drawTrail, drawProjectile, drawParticles — залишив майже без змін, тільки трохи покращив pupil hitbox)
+
+function drawEye() { /* ... (оригінальний код drawEye без змін) ... */ 
+  // (щоб не роздувати повідомлення — код drawEye той самий, що був)
+  const { x, y, r, pupilR } = eye;
+
+  const glow = ctx.createRadialGradient(x, y, r * 0.3, x, y, r * 2.2);
+  glow.addColorStop(0, 'rgba(90, 40, 140, 0.18)');
+  glow.addColorStop(1, 'rgba(90, 40, 140, 0)');
+  ctx.beginPath();
+  ctx.arc(x, y, r * 2.2, 0, Math.PI * 2);
+  ctx.fillStyle = glow;
+  ctx.fill();
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.ellipse(x, y, r, r * 0.65, 0, 0, Math.PI * 2);
+  const scleraGrad = ctx.createRadialGradient(x - r * 0.2, y - r * 0.2, 0, x, y, r);
+  scleraGrad.addColorStop(0, '#1a1428');
+  scleraGrad.addColorStop(1, '#0e0c18');
+  ctx.fillStyle = scleraGrad;
+  ctx.fill();
+  ctx.strokeStyle = '#3a2050';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.restore();
+
+  const irisGrad = ctx.createRadialGradient(x, y, 0, x, y, pupilR * 2.2);
+  irisGrad.addColorStop(0, '#1a0830');
+  irisGrad.addColorStop(0.5, '#5a2090');
+  irisGrad.addColorStop(1, '#3a1060');
+  ctx.beginPath();
+  ctx.arc(x, y, pupilR * 2.2, 0, Math.PI * 2);
+  ctx.fillStyle = irisGrad;
+  ctx.fill();
+
+  ctx.save();
+  ctx.globalAlpha = 0.25;
+  for (let i = 0; i < 12; i++) {
+    const angle = (i / 12) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(x + Math.cos(angle) * pupilR * 1.1, y + Math.sin(angle) * pupilR * 1.1);
+    ctx.lineTo(x + Math.cos(angle) * pupilR * 2.1, y + Math.sin(angle) * pupilR * 2.1);
+    ctx.strokeStyle = '#c090ff';
+    ctx.lineWidth = 0.7;
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  const pupilGrad = ctx.createRadialGradient(x - 2, y - 2, 0, x, y, pupilR);
+  pupilGrad.addColorStop(0, '#2a0a40');
+  pupilGrad.addColorStop(1, '#080010');
+  ctx.beginPath();
+  ctx.arc(x, y, pupilR, 0, Math.PI * 2);
+  ctx.fillStyle = pupilGrad;
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.arc(x, y, pupilR, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(180, 120, 255, 0.4)';
+  ctx.lineWidth = 1.2;
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(x - pupilR * 0.35, y - pupilR * 0.4, pupilR * 0.22, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255,255,255,0.22)';
+  ctx.fill();
+}
+
+function drawLauncher() {
+  const { x, y } = launcher;
+  ctx.beginPath();
+  ctx.arc(x, y, 18, 0, Math.PI * 2);
+  ctx.fillStyle = '#1a0a2a';
+  ctx.fill();
+  ctx.strokeStyle = '#5a3080';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(x, y, 5, 0, Math.PI * 2);
+  ctx.fillStyle = '#9060cc';
+  ctx.fill();
+}
+
+function drawAimLine() {
+  if (!aim.active) return;
+  const dx = aim.startX - aim.curX;
+  const dy = aim.startY - aim.curY;
+  const len = Math.sqrt(dx*dx + dy*dy) || 1;
+  const nx = dx / len;
+  const ny = dy / len;
+
+  ctx.save();
+  ctx.setLineDash([4, 8]);
+  ctx.strokeStyle = `rgba(160, 100, 255, ${aim.power * 0.65})`;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(launcher.x, launcher.y);
+
+  let px = launcher.x, py = launcher.y;
+  let pvx = nx * aim.power * 22;
+  let pvy = ny * aim.power * 22;
+  for (let i = 0; i < 45; i++) {   // ← збільшив
+    pvy += 0.18;
+    px += pvx;
+    py += pvy;
+    ctx.lineTo(px, py);
+    if (py > canvas.height) break;
+  }
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.beginPath();
+  ctx.arc(launcher.x, launcher.y, 18 + aim.power * 26, 0, Math.PI * 2);
+  ctx.strokeStyle = `rgba(140, 70, 220, ${aim.power * 0.55})`;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+}
+
+function drawTrail() {
+  proj.trail.forEach(t => {
+    const alpha = (1 - t.age / 20) * 0.55;
+    const r = 5.5 * (1 - t.age / 20);
+    ctx.beginPath();
+    ctx.arc(t.x, t.y, Math.max(0.6, r), 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(170, 90, 255, ${alpha})`;
+    ctx.fill();
+  });
+}
+
+function drawProjectile() {
+  if (!proj.active) return;
+  const g = ctx.createRadialGradient(proj.x, proj.y, 0, proj.x, proj.y, 13);
+  g.addColorStop(0, 'rgba(210, 150, 255, 0.95)');
+  g.addColorStop(1, 'rgba(150, 70, 255, 0)');
+  ctx.beginPath();
+  ctx.arc(proj.x, proj.y, 13, 0, Math.PI * 2);
+  ctx.fillStyle = g;
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.arc(proj.x, proj.y, 5.5, 0, Math.PI * 2);
+  ctx.fillStyle = '#f0e0ff';
+  ctx.fill();
+}
+
+function drawParticles() {
+  particles.forEach(p => {
+    ctx.globalAlpha = p.life / 110;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.fillStyle = p.color;
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+}
+
+// ── UI ─────────────────────────────────────────────────────────
+function updateUI() {
+  document.getElementById('score-ui').textContent = score;
+  document.getElementById('level-ui').textContent = level;
+}
+
+function updateLives() {
+  for (let i = 1; i <= 3; i++) {
+    document.getElementById(`l${i}`).classList.toggle('lost', i > lives);
+  }
+}
+
+// ── Loop ───────────────────────────────────────────────────────
+function loop() {
+  if (state !== 'dead' && state !== 'idle') update();
+  draw();
+  frameId = requestAnimationFrame(loop);
+}
+
+// Buttons
+document.getElementById('start-btn').addEventListener('click', () => {
+  document.getElementById('start-screen').classList.add('hidden');
+  initGame();
+  loop();
+});
+
+document.getElementById('retry-btn').addEventListener('click', () => {
+  document.getElementById('over-screen').classList.add('hidden');
+  initGame();
+});
+
+loop();
+</script>
+</body>
+</html>
