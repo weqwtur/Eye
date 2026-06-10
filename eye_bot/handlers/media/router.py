@@ -17,10 +17,12 @@ logger = logging.getLogger(__name__)
 
 ADMIN_ID = int(os.getenv("ADMIN_ID") or 0)
 
-SUGGESTION_WINDOW_SECONDS = 60 * 60
+SUGGESTION_WINDOW_SECONDS = 5 * 60
 SUGGESTION_LIMIT = 3
+
 suggestion_timestamps: dict[int, list[float]] = {}
 blacklisted_suggest_users: set[int] = set()
+
 VALID_URL_PATTERN = re.compile(r"https?://\S+", re.IGNORECASE)
 
 
@@ -37,31 +39,15 @@ def media_menu_keyboard():
 
     kb.adjust(3, 3, 3)
 
-    kb.row(
-        types.InlineKeyboardButton(
-            text="Suggest media",
-            callback_data="suggest_media"
-        )
-    )
-
-    kb.row(
-        types.InlineKeyboardButton(
-            text="⭠ Back",
-            callback_data="menu:back"
-        )
-    )
+    kb.row(types.InlineKeyboardButton(text="Suggest media", callback_data="suggest_media"))
+    kb.row(types.InlineKeyboardButton(text="⭠ Back", callback_data="menu:back"))
 
     return kb.as_markup()
 
 
 def suggest_back_keyboard():
     kb = InlineKeyboardBuilder()
-    kb.row(
-        types.InlineKeyboardButton(
-            text="⭠ Back",
-            callback_data="menu:back"
-        )
-    )
+    kb.row(types.InlineKeyboardButton(text="⭠ Back", callback_data="menu:back"))
     return kb.as_markup()
 
 
@@ -93,16 +79,13 @@ def _has_suggestion_quota(user_id: int) -> bool:
 
 
 async def cmd_media(message: types.Message):
-    await message.edit_text(
-        "📁 Choose media:",
-        reply_markup=media_menu_keyboard()
-    )
+    await message.edit_text("📁 Choose media:", reply_markup=media_menu_keyboard())
 
 
 @router.callback_query(F.data == "suggest_media", F.message.chat.type == "private")
 async def suggest_media_start(callback: types.CallbackQuery, state: FSMContext):
     await state.set_state(MediaSuggest.waiting_for_link)
-    await state.update_data(menu_message_id=callback.message.message_id, prev_menu="media")
+    await state.update_data(menu_message_id=callback.message.message_id)
 
     await callback.message.edit_text(
         "📤 Send a link to your media:",
@@ -118,32 +101,23 @@ async def suggest_media_waiting_for_image(message: types.Message):
 
 @router.message(MediaSuggest.waiting_for_link, F.text, F.chat.type == "private")
 async def suggest_media_receive(message: types.Message, state: FSMContext):
-    if message.from_user.id in blacklisted_suggest_users:
-        await message.reply(
-            "You are not allowed to submit media suggestions at this time."
-        )
+    user_id = message.from_user.id
+
+    if user_id in blacklisted_suggest_users:
+        await message.reply("You are not allowed to submit media suggestions at this time.")
         return
 
     match = VALID_URL_PATTERN.search(message.text or "")
     if not match:
-        await message.reply(
-            "Please send a valid link starting with http:// or https://."
-        )
+        await message.reply("Please send a valid link starting with http:// or https://.")
         return
 
-    if not _has_suggestion_quota(message.from_user.id):
-        await message.reply(
-            "You can submit up to 3 suggestions per hour. Please try again later."
-        )
+    if not _has_suggestion_quota(user_id):
+        await message.reply("You can submit up to 3 suggestions every 5 minutes. Try again later.")
         return
 
     url = match.group(0)
-    data = await state.get_data()
-    await state.update_data(
-        pending_link=url,
-        menu_message_id=data.get("menu_message_id"),
-        prev_menu="media"
-    )
+    await state.update_data(pending_link=url)
     await state.set_state(MediaSuggest.waiting_for_confirm)
 
     await message.reply(
@@ -157,26 +131,24 @@ async def suggest_media_confirm(callback: types.CallbackQuery, state: FSMContext
     data = await state.get_data()
     url = data.get("pending_link")
     menu_message_id = data.get("menu_message_id")
+    user_id = callback.from_user.id
 
     if not url:
         await callback.answer("No media link to confirm.")
         return
 
-    if not _has_suggestion_quota(callback.from_user.id):
-        await callback.answer(
-            "You can submit up to 3 suggestions per hour. Please try again later."
-        )
+    if not _has_suggestion_quota(user_id):
+        await callback.answer("You can submit up to 3 suggestions every 5 minutes.")
         return
 
-    suggestion_timestamps.setdefault(callback.from_user.id, []).append(time.time())
+    suggestion_timestamps.setdefault(user_id, []).append(time.time())
 
     await bot.send_message(
         chat_id=ADMIN_ID,
         text=(
             f"📬 New media suggestion from "
             f"<b>{callback.from_user.full_name}</b> "
-            f"(<code>{callback.from_user.id}</code>)\n\n"
-            f"{url}"
+            f"(<code>{user_id}</code>)\n\n{url}"
         ),
         parse_mode="HTML"
     )
@@ -214,17 +186,18 @@ async def suggest_media_cancel(callback: types.CallbackQuery, state: FSMContext,
     await callback.answer("Suggestion canceled.")
 
 
-@router.message(
-    F.from_user.id == ADMIN_ID,
-    F.text.regexp(r"^/ban_suggest\s+\d+$"),
-    F.chat.type == "private"
-)
+@router.message(F.from_user.id == ADMIN_ID, F.text.regexp(r"^/ban_suggest\s+\d+$"))
 async def ban_suggest_command(message: types.Message):
-    parts = message.text.split()
-    user_id = int(parts[1])
-
+    user_id = int(message.text.split()[1])
     blacklisted_suggest_users.add(user_id)
     await message.reply(f"User {user_id} has been banned from media suggestions.")
+
+
+@router.message(F.from_user.id == ADMIN_ID, F.text.regexp(r"^/unban_suggest\s+\d+$"))
+async def unban_suggest_command(message: types.Message):
+    user_id = int(message.text.split()[1])
+    blacklisted_suggest_users.discard(user_id)
+    await message.reply(f"User {user_id} has been unbanned from media suggestions.")
 
 
 @router.callback_query(F.data.startswith("open_media:"), F.message.chat.type == "private")
@@ -238,30 +211,14 @@ async def open_media(callback: types.CallbackQuery):
         await callback.answer("This media is not added yet")
 
 
-@router.callback_query(F.data == "open_media_menu", F.message.chat.type == "private")
-async def back_to_media_menu(callback: types.CallbackQuery):
-    await callback.message.delete()
-    await callback.message.answer(
-        "📁 Choose media:",
-        reply_markup=media_menu_keyboard()
-    )
-    await callback.answer()
-
-
-@router.callback_query(F.data == "noop", F.message.chat.type == "private")
-async def noop_callback(callback: types.CallbackQuery):
-    await callback.answer()
-
-
 @router.callback_query(F.data.regexp(r"^media\d+:\d+$"), F.message.chat.type == "private")
 async def media_switch(callback: types.CallbackQuery):
-    user_id = callback.from_user.id if callback.from_user else callback.message.chat.id
+    user_id = callback.from_user.id
     lock = gallery.MEDIA_LOCKS.setdefault(user_id, asyncio.Lock())
 
-    acquire_nowait = getattr(lock, "acquire_nowait", None)
     try:
-        if callable(acquire_nowait):
-            acquire_nowait()
+        if hasattr(lock, "acquire_nowait"):
+            lock.acquire_nowait()
         else:
             if lock.locked():
                 await callback.answer()
@@ -272,10 +229,7 @@ async def media_switch(callback: types.CallbackQuery):
         return
 
     try:
-        parts = callback.data.replace("media", "").split(":")
-        media_id = int(parts[0])
-        index = int(parts[1])
-
+        media_id, index = map(int, callback.data.replace("media", "").split(":"))
         await gallery.media_start(media_id, callback, index=index)
     except Exception as e:
         logger.error(f"Error switching media for {callback.data}: {e}", exc_info=True)
