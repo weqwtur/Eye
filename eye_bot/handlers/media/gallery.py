@@ -105,60 +105,62 @@ MEDIA = [
 ]
 
 def _build_keyboard(media_id: int, index: int, total: int, tiktok: str | None):
-   kb = InlineKeyboardBuilder()
+    kb = InlineKeyboardBuilder()
 
-   if tiktok:
-       kb.button(text=" ", url=tiktok)
+    if tiktok:
+        kb.button(text=" ", url=tiktok)
 
-   if index > 0:
-       kb.button(text="⭠", callback_data=f"media{media_id}:{index-1}")
+    if index > 0:
+        kb.button(text="⭠", callback_data=f"media{media_id}:{index-1}")
 
-   if index < total - 1:
-       kb.button(text="⭢", callback_data=f"media{media_id}:{index+1}")
+    if index < total - 1:
+        kb.button(text="⭢", callback_data=f"media{media_id}:{index+1}")
 
-   if tiktok:
-       kb.adjust(1, 2)
-   else:
-       kb.adjust(2)
+    kb.button(text="⭠ Back", callback_data="open_media_menu")
 
-   return kb.as_markup()
+    if tiktok:
+        kb.adjust(1, 2, 1)
+    else:
+        kb.adjust(2, 1)
+
+    return kb.as_markup()
 
 
 async def media_start(media_id: int, message_or_callback, index: int = 0):
-   group = MEDIA_MAP.get(media_id)
-   if not group:
-       await message_or_callback.answer("This media is not added yet")
-       return
+    group = MEDIA_MAP.get(media_id)
+    if not group:
+        await message_or_callback.answer("This media is not added yet")
+        return
 
-   items = group["items"]
-   tiktok = group["tiktok"]
+    items = group["items"]
+    tiktok = group["tiktok"]
 
-   if index < 0 or index >= len(items):
-       await message_or_callback.answer("❌ Invalid media index")
-       return
+    if index < 0 or index >= len(items):
+        await message_or_callback.answer("❌ Invalid media index")
+        return
 
-   file_id = items[index]
-   is_photo = file_id.startswith("AgAC")
-   markup = _build_keyboard(media_id, index, len(items), tiktok)
+    file_id = items[index]
+    is_photo = file_id.startswith("AgAC")
+    markup = _build_keyboard(media_id, index, len(items), tiktok)
 
-   try:
-       if isinstance(message_or_callback, types.CallbackQuery):
-           media = (
-               types.InputMediaPhoto(media=file_id)
-               if is_photo
-               else types.InputMediaVideo(media=file_id)
-           )
-           await message_or_callback.message.edit_media(media=media, reply_markup=markup)
-           await message_or_callback.answer()
-       else:
-           if is_photo:
-               await message_or_callback.answer_photo(photo=file_id, reply_markup=markup)
-           else:
-               await message_or_callback.answer_video(video=file_id, reply_markup=markup)
+    try:
+        if isinstance(message_or_callback, types.CallbackQuery):
+            media = (
+                types.InputMediaPhoto(media=file_id)
+                if is_photo
+                else types.InputMediaVideo(media=file_id)
+            )
+            await message_or_callback.message.edit_media(media=media, reply_markup=markup)
+            await message_or_callback.answer()
+        else:
+            if is_photo:
+                await message_or_callback.answer_photo(photo=file_id, reply_markup=markup)
+            else:
+                await message_or_callback.answer_video(video=file_id, reply_markup=markup)
 
-   except Exception as e:
-       logger.error(f"Error sending media {media_id}[{index}]: {e}")
-       try:
-           await message_or_callback.answer("❌ Error sending media")
-       except Exception:
-           pass
+    except Exception as e:
+        logger.error(f"Error sending media {media_id}[{index}]: {e}")
+        try:
+            await message_or_callback.answer("❌ Error sending media")
+        except Exception:
+            pass
