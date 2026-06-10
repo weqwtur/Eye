@@ -52,20 +52,31 @@ dp.include_router(github_router)
 dp.include_router(diseases_router)
 dp.include_router(ciphers_router)
 
-BASE_DIR = Path(__file__).parent.parent  
+BASE_DIR = Path(__file__).parent.parent
 
 async def serve_static(request):
-    """Віддає статичні файли"""
-    file_path = BASE_DIR / "static" / request.match_info['filename']
+    filename = request.match_info['filename']
+    file_path = BASE_DIR / "static" / filename
     if file_path.exists() and file_path.is_file():
         return web.FileResponse(file_path)
-    return web.Response(status=404, text="File not found")
+    logger.warning(f"❌ File not found: {file_path}")
+    return web.Response(status=404, text=f"File not found: {filename}")
 
 
 async def on_startup():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     logger.info("✅ Database initialized")
+
+
+async def flush_pending_updates():
+    logger.info("🧹 Flushing pending updates...")
+    try:
+        updates = await bot.get_updates(offset=-1, timeout=0)
+        if updates:
+            await bot.get_updates(offset=updates[-1].update_id + 1, timeout=0)
+    except Exception as e:
+        logger.error(f"Flush error: {e}")
 
 
 async def main():
@@ -75,7 +86,6 @@ async def main():
     dp.startup.register(on_startup)
 
     app = Application()
-    
     app.router.add_get('/games/{filename:.*}', serve_static)
 
     async def index_redirect(request):
@@ -89,18 +99,10 @@ async def main():
     await site.start()
 
     logger.info("🌐 Web server started on port 8080")
-    logger.info(f"🎮 Mini App will be available at: http://your-domain/games/hit-the-eye/")
+    logger.info("🎮 Mini App: https://eye-production-853c.up.railway.app/games/hit-the-eye/")
 
-    # Запускаємо бота
     await flush_pending_updates()
     await dp.start_polling(bot)
-
-
-async def flush_pending_updates():
-    logger.info("🧹 Flushing pending updates...")
-    updates = await bot.get_updates(offset=-1, timeout=0)
-    if updates:
-        await bot.get_updates(offset=updates[-1].update_id + 1, timeout=0)
 
 
 if __name__ == "__main__":
@@ -108,3 +110,5 @@ if __name__ == "__main__":
         asyncio.run(main())
     except KeyboardInterrupt:
         logger.info("🛑 Bot stopped")
+    except Exception as e:
+        logger.error(f"Critical error: {e}")
