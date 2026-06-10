@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Hit the Eye — Telegram Mini App</title>
+  <title>Hit the Eye</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     * {
@@ -13,8 +13,6 @@
       user-select: none;
       -webkit-tap-highlight-color: transparent;
     }
-
-    /* Жодних скролів, жодних свайпів */
     html, body {
       width: 100%;
       height: 100%;
@@ -24,11 +22,9 @@
       overscroll-behavior: none;
       touch-action: none;
     }
-
     body {
       font-family: 'Courier New', monospace;
     }
-
     #game-container {
       position: relative;
       width: 100vw;
@@ -37,7 +33,6 @@
       overscroll-behavior: none !important;
       background: #080810;
     }
-
     canvas {
       display: block;
       width: 100%;
@@ -45,8 +40,6 @@
       touch-action: none;
       cursor: crosshair;
     }
-
-    /* Верхнє меню — завжди видиме */
     #ui {
       position: absolute;
       top: 0;
@@ -56,56 +49,50 @@
       justify-content: space-between;
       align-items: flex-start;
       padding: 20px 24px;
-      pointer-events: none;  /* щоб дотики проходили крізь меню до canvas */
+      pointer-events: none;
       z-index: 5;
     }
-
     .stat {
       display: flex;
       flex-direction: column;
       align-items: center;
-      background: rgba(8, 8, 16, 0.55);
+      background: rgba(0, 0, 0, 0.55);
       backdrop-filter: blur(4px);
       padding: 6px 12px;
       border-radius: 32px;
     }
-
     .stat-value {
       font-size: 28px;
       font-weight: 700;
-      color: #e8e0f0;
+      color: #ffffff;
       letter-spacing: 2px;
       line-height: 1;
     }
-
     .stat-label {
       font-size: 9px;
-      color: #a080c0;
+      color: #cccccc;
       letter-spacing: 3px;
       text-transform: uppercase;
       margin-top: 2px;
     }
-
     #lives {
       display: flex;
       gap: 8px;
       align-items: center;
-      background: rgba(8, 8, 16, 0.55);
+      background: rgba(0, 0, 0, 0.55);
       backdrop-filter: blur(4px);
       padding: 6px 16px;
       border-radius: 32px;
     }
-
     .life {
       font-size: 20px;
       transition: all 0.2s;
+      filter: brightness(1.2);
     }
     .life.lost {
       opacity: 0.2;
       filter: grayscale(1);
     }
-
-    /* Екрани (старт, кінець) */
     .screen {
       position: absolute;
       inset: 0;
@@ -121,7 +108,6 @@
     .screen.hidden {
       display: none;
     }
-
     .eye-symbol {
       font-size: 72px;
       margin-bottom: 8px;
@@ -131,24 +117,23 @@
       0%, 100% { transform: scale(1); opacity: 0.9; }
       50% { transform: scale(1.08); opacity: 1; }
     }
-
     .screen-title {
       font-size: 13px;
       letter-spacing: 6px;
-      color: #7a5a9a;
+      color: #aaaaaa;
       text-transform: uppercase;
       margin-bottom: 6px;
     }
     .screen-big {
       font-size: 38px;
       font-weight: 700;
-      color: #e8e0f0;
+      color: #ffffff;
       letter-spacing: 3px;
       margin-bottom: 32px;
     }
     .screen-sub {
       font-size: 11px;
-      color: #4a3a5a;
+      color: #888888;
       letter-spacing: 2px;
       text-transform: uppercase;
       margin-bottom: 48px;
@@ -158,8 +143,8 @@
     }
     .btn {
       background: transparent;
-      border: 1px solid #5a3a8a;
-      color: #c0a0e0;
+      border: 1px solid #888888;
+      color: #ffffff;
       font-family: 'Courier New', monospace;
       font-size: 12px;
       letter-spacing: 4px;
@@ -170,11 +155,10 @@
       outline: none;
     }
     .btn:active {
-      background: #5a3a8a22;
-      border-color: #9a6acc;
-      color: #e0c0ff;
+      background: rgba(255, 255, 255, 0.1);
+      border-color: #ffffff;
+      color: #ffffff;
     }
-
     #combo-display {
       position: absolute;
       bottom: 32px;
@@ -182,9 +166,9 @@
       transform: translateX(-50%);
       font-size: 13px;
       letter-spacing: 4px;
-      color: #c090ff;
+      color: #ffffff;
       text-transform: uppercase;
-      text-shadow: 0 0 8px #4a1a8a;
+      text-shadow: 0 0 8px rgba(255,255,255,0.5);
       pointer-events: none;
       z-index: 5;
       white-space: nowrap;
@@ -195,7 +179,6 @@
 <body>
 <div id="game-container">
   <canvas id="canvas"></canvas>
-
   <div id="ui">
     <div class="stat">
       <div class="stat-value" id="score-ui">0</div>
@@ -212,7 +195,6 @@
     </div>
   </div>
   <div id="combo-display" style="opacity:0"></div>
-
   <div class="screen" id="start-screen">
     <div class="eye-symbol">👁</div>
     <div class="screen-title">telegram mini app</div>
@@ -220,30 +202,26 @@
     <div class="screen-sub">hold to aim<br>release to fire<br>hit the pupil</div>
     <button class="btn" id="start-btn">[ focus ]</button>
   </div>
-
   <div class="screen hidden" id="over-screen">
     <div class="eye-symbol" style="animation:none; opacity:0.3">👁</div>
     <div class="screen-title">vision lost</div>
     <div id="score-display">0</div>
-    <div id="score-label">SCORE</div>
-    <div id="best-display">best — 0</div>
+    <div id="score-label" style="color:#aaa;">SCORE</div>
+    <div id="best-display" style="color:#aaa;">best — 0</div>
     <button class="btn" id="retry-btn">[ retry ]</button>
   </div>
 </div>
-
 <script>
   (function() {
-    // ---------- Telegram WebApp ініціалізація ----------
     const tg = window.Telegram?.WebApp;
     if (tg) {
       tg.ready();
       tg.expand();
-      tg.disableVerticalSwipes();        // ⛔ вимикаємо згортання при свайпі вниз
+      tg.disableVerticalSwipes();
       tg.setBackgroundColor("#080810");
       tg.setHeaderColor("#080810");
     }
 
-    // ---------- Canvas ----------
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
 
@@ -254,8 +232,7 @@
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 
-    // ---------- Ігровий стан ----------
-    let gameState = 'idle';   // 'idle', 'aiming', 'flying', 'dead'
+    let gameState = 'idle';
     let score = 0;
     let best = parseInt(localStorage.getItem('hte_best') || '0');
     let bestLevel = parseInt(localStorage.getItem('hte_best_level') || '1');
@@ -263,37 +240,15 @@
     let level = 1;
     let combo = 0;
 
-    // Об'єкт ока
-    let eye = {
-      x: 0, y: 0, r: 52, pupilR: 18,
-      vx: 0, vy: 0, phase: 0
-    };
-
-    // Пушка (базова точка)
+    let eye = { x: 0, y: 0, r: 52, pupilR: 18, vx: 0, vy: 0, phase: 0 };
     let launcher = { x: 0, y: 0 };
-
-    // Снаряд
-    let projectile = {
-      x: 0, y: 0, vx: 0, vy: 0,
-      active: false,
-      trail: []          // { x, y, age }
-    };
-
-    // Прицілювання
-    let aim = {
-      active: false,
-      startX: 0, startY: 0,
-      curX: 0, curY: 0,
-      power: 0
-    };
-
-    // Ефекти
+    let projectile = { x: 0, y: 0, vx: 0, vy: 0, active: false, trail: [] };
+    let aim = { active: false, startX: 0, startY: 0, curX: 0, curY: 0, power: 0 };
     let particles = [];
     let hitFlash = 0;
     let missFlash = 0;
     let comboAnim = 0;
 
-    // ---------- Допоміжні функції UI ----------
     function updateUI() {
       document.getElementById('score-ui').innerText = score;
       document.getElementById('level-ui').innerText = level;
@@ -315,15 +270,12 @@
       }
     }
 
-    // ---------- Спавн ока ----------
     function spawnEye() {
       const margin = 80;
       eye.r = Math.max(34, 52 - Math.floor(level * 1.4));
       eye.pupilR = Math.max(12, 18 - Math.floor(level * 0.9));
-
       eye.x = margin + Math.random() * (canvas.width - margin * 2);
       eye.y = 100 + Math.random() * (canvas.height * 0.42);
-
       const speed = 0.55 + level * 0.18;
       const angle = Math.random() * Math.PI * 2;
       eye.vx = Math.cos(angle) * speed;
@@ -331,7 +283,6 @@
       eye.phase = Math.random() * Math.PI * 2;
     }
 
-    // ---------- Частинки ----------
     function spawnParticles(x, y, color, count) {
       for (let i = 0; i < count; i++) {
         const angle = Math.random() * Math.PI * 2;
@@ -347,23 +298,17 @@
       }
     }
 
-    // ---------- Логіка влучень / промахів ----------
     function onHit(zone) {
       projectile.active = false;
       projectile.trail = [];
-
       const isPupil = zone === 'pupil';
       const points = isPupil ? (10 + combo * 5) : 3;
       score += points;
       combo++;
-
-      spawnParticles(eye.x, eye.y, isPupil ? '#c090ff' : '#7050aa', isPupil ? 26 : 12);
+      spawnParticles(eye.x, eye.y, isPupil ? '#ffffff' : '#aaaaaa', isPupil ? 26 : 12);
       hitFlash = isPupil ? 85 : 45;
-
       if (tg) tg.HapticFeedback.impactOccurred(isPupil ? 'heavy' : 'medium');
-
       if (combo >= 3) showComboMessage();
-
       level = 1 + Math.floor(score / 50);
       spawnEye();
       gameState = 'aiming';
@@ -378,12 +323,8 @@
       missFlash = 65;
       if (tg) tg.HapticFeedback.notificationOccurred('error');
       updateLives();
-
-      if (lives <= 0) {
-        gameOver();
-      } else {
-        gameState = 'aiming';
-      }
+      if (lives <= 0) gameOver();
+      else gameState = 'aiming';
     }
 
     function gameOver() {
@@ -396,28 +337,22 @@
         bestLevel = level;
         localStorage.setItem('hte_best_level', bestLevel);
       }
-
       document.getElementById('score-display').innerText = score;
       document.getElementById('best-display').innerText = `best — ${best}`;
-
       setTimeout(() => {
         document.getElementById('over-screen').classList.remove('hidden');
       }, 500);
-
       if (tg) {
         try { tg.sendData(JSON.stringify({ score, best, level, bestLevel })); } catch(e) {}
       }
     }
 
-    // ---------- Постріл ----------
     function fire() {
       if (aim.power < 0.05) return;
-
       const dx = aim.startX - aim.curX;
       const dy = aim.startY - aim.curY;
       const len = Math.hypot(dx, dy) || 1;
       const speed = aim.power * 22;
-
       projectile.x = launcher.x;
       projectile.y = launcher.y;
       projectile.vx = (dx / len) * speed;
@@ -425,49 +360,32 @@
       projectile.active = true;
       projectile.trail = [];
       gameState = 'flying';
-
       if (tg) tg.HapticFeedback.impactOccurred('light');
     }
 
-    // ---------- Оновлення фізики (кожен кадр) ----------
     function updateGame() {
       if (gameState !== 'aiming' && gameState !== 'flying') return;
-
-      // Рух ока
       eye.phase += 0.012;
       eye.x += eye.vx;
       eye.y += eye.vy + Math.sin(eye.phase) * 0.4;
-
-      // Відбиття від країв
       if (eye.x < eye.r) { eye.x = eye.r; eye.vx *= -0.98; }
       if (eye.x > canvas.width - eye.r) { eye.x = canvas.width - eye.r; eye.vx *= -0.98; }
       if (eye.y < eye.r + 60) { eye.y = eye.r + 60; eye.vy *= -0.98; }
       if (eye.y > canvas.height * 0.6) { eye.y = canvas.height * 0.6; eye.vy *= -0.98; }
-
-      // Снаряд
       if (projectile.active) {
         projectile.trail.push({ x: projectile.x, y: projectile.y, age: 0 });
         if (projectile.trail.length > 20) projectile.trail.shift();
         projectile.trail.forEach(t => t.age++);
-
         projectile.vy += 0.18;
         projectile.x += projectile.vx;
         projectile.y += projectile.vy;
-
         const dx = projectile.x - eye.x;
         const dy = projectile.y - eye.y;
         const dist = Math.hypot(dx, dy);
-
-        if (dist < eye.pupilR + 9) {
-          onHit('pupil');
-        } else if (dist < eye.r + 8) {
-          onHit('eye');
-        } else if (projectile.y > canvas.height + 50 || projectile.x < -50 || projectile.x > canvas.width + 50) {
-          onMiss();
-        }
+        if (dist < eye.pupilR + 9) onHit('pupil');
+        else if (dist < eye.r + 8) onHit('eye');
+        else if (projectile.y > canvas.height + 50 || projectile.x < -50 || projectile.x > canvas.width + 50) onMiss();
       }
-
-      // Частинки
       particles = particles.filter(p => p.life > 0);
       for (let p of particles) {
         p.x += p.vx;
@@ -476,84 +394,70 @@
         p.life -= 2;
         p.vx *= 0.97;
       }
-
-      // Спалахи та комбо-таймер
       if (hitFlash > 0) hitFlash -= 3;
       if (missFlash > 0) missFlash -= 3;
       if (comboAnim > 0) {
         comboAnim -= 2;
-        if (comboAnim <= 0) {
-          document.getElementById('combo-display').style.opacity = '0';
-        }
+        if (comboAnim <= 0) document.getElementById('combo-display').style.opacity = '0';
       }
     }
 
-    // ---------- МАЛЮВАННЯ (всі візуальні ефекти оригіналу) ----------
     function drawEye() {
       const { x, y, r, pupilR } = eye;
-      // сяйво
       const glow = ctx.createRadialGradient(x, y, r * 0.3, x, y, r * 2.2);
-      glow.addColorStop(0, 'rgba(90, 40, 140, 0.18)');
-      glow.addColorStop(1, 'rgba(90, 40, 140, 0)');
+      glow.addColorStop(0, 'rgba(255, 255, 255, 0.15)');
+      glow.addColorStop(1, 'rgba(255, 255, 255, 0)');
       ctx.beginPath();
       ctx.arc(x, y, r * 2.2, 0, Math.PI * 2);
       ctx.fillStyle = glow;
       ctx.fill();
-
-      // білок
       ctx.save();
       ctx.beginPath();
       ctx.ellipse(x, y, r, r * 0.65, 0, 0, Math.PI * 2);
       const sclera = ctx.createRadialGradient(x - r * 0.2, y - r * 0.2, 0, x, y, r);
-      sclera.addColorStop(0, '#1a1428');
-      sclera.addColorStop(1, '#0e0c18');
+      sclera.addColorStop(0, '#1a1a24');
+      sclera.addColorStop(1, '#0e0e18');
       ctx.fillStyle = sclera;
       ctx.fill();
-      ctx.strokeStyle = '#3a2050';
+      ctx.strokeStyle = '#666666';
       ctx.lineWidth = 1.5;
       ctx.stroke();
       ctx.restore();
-
-      // райдужка
       const iris = ctx.createRadialGradient(x, y, 0, x, y, pupilR * 2.2);
-      iris.addColorStop(0, '#1a0830');
-      iris.addColorStop(0.5, '#5a2090');
-      iris.addColorStop(1, '#3a1060');
+      iris.addColorStop(0, '#dddddd');
+      iris.addColorStop(0.5, '#aaaaaa');
+      iris.addColorStop(1, '#888888');
       ctx.beginPath();
       ctx.arc(x, y, pupilR * 2.2, 0, Math.PI * 2);
       ctx.fillStyle = iris;
       ctx.fill();
-
-      // промені
       ctx.save();
-      ctx.globalAlpha = 0.25;
+      ctx.globalAlpha = 0.3;
       for (let i = 0; i < 12; i++) {
         const ang = (i / 12) * Math.PI * 2;
         ctx.beginPath();
         ctx.moveTo(x + Math.cos(ang) * pupilR * 1.1, y + Math.sin(ang) * pupilR * 1.1);
         ctx.lineTo(x + Math.cos(ang) * pupilR * 2.1, y + Math.sin(ang) * pupilR * 2.1);
-        ctx.strokeStyle = '#c090ff';
+        ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 0.7;
         ctx.stroke();
       }
       ctx.restore();
-
-      // зіниця
       const pupilGrad = ctx.createRadialGradient(x - 2, y - 2, 0, x, y, pupilR);
-      pupilGrad.addColorStop(0, '#2a0a40');
-      pupilGrad.addColorStop(1, '#080010');
+      pupilGrad.addColorStop(0, '#111111');
+      pupilGrad.addColorStop(1, '#000000');
       ctx.beginPath();
       ctx.arc(x, y, pupilR, 0, Math.PI * 2);
       ctx.fillStyle = pupilGrad;
       ctx.fill();
       ctx.beginPath();
       ctx.arc(x, y, pupilR, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(180, 120, 255, 0.4)';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
       ctx.lineWidth = 1.2;
       ctx.stroke();
       ctx.beginPath();
       ctx.arc(x - pupilR * 0.35, y - pupilR * 0.4, pupilR * 0.22, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(255,255,255,0.22)';
+      ctx.fillStyle = 'rgba(255,255,255,0.3)';
       ctx.fill();
     }
 
@@ -561,14 +465,14 @@
       const { x, y } = launcher;
       ctx.beginPath();
       ctx.arc(x, y, 18, 0, Math.PI * 2);
-      ctx.fillStyle = '#1a0a2a';
+      ctx.fillStyle = '#1a1a2a';
       ctx.fill();
-      ctx.strokeStyle = '#5a3080';
+      ctx.strokeStyle = '#aaaaaa';
       ctx.lineWidth = 1.5;
       ctx.stroke();
       ctx.beginPath();
       ctx.arc(x, y, 5, 0, Math.PI * 2);
-      ctx.fillStyle = '#9060cc';
+      ctx.fillStyle = '#ffffff';
       ctx.fill();
     }
 
@@ -579,14 +483,12 @@
       const len = Math.hypot(dx, dy) || 1;
       const nx = dx / len;
       const ny = dy / len;
-
       ctx.save();
       ctx.setLineDash([4, 8]);
-      ctx.strokeStyle = `rgba(160, 100, 255, ${aim.power * 0.65})`;
+      ctx.strokeStyle = `rgba(255, 255, 255, ${aim.power * 0.65})`;
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.moveTo(launcher.x, launcher.y);
-
       let px = launcher.x, py = launcher.y;
       let pvx = nx * aim.power * 22;
       let pvy = ny * aim.power * 22;
@@ -599,10 +501,9 @@
       }
       ctx.stroke();
       ctx.restore();
-
       ctx.beginPath();
       ctx.arc(launcher.x, launcher.y, 18 + aim.power * 26, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(140, 70, 220, ${aim.power * 0.55})`;
+      ctx.strokeStyle = `rgba(255, 255, 255, ${aim.power * 0.55})`;
       ctx.lineWidth = 1.5;
       ctx.stroke();
     }
@@ -613,7 +514,7 @@
         const r = 5.5 * (1 - t.age / 20);
         ctx.beginPath();
         ctx.arc(t.x, t.y, Math.max(0.6, r), 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(170, 90, 255, ${alpha})`;
+        ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
         ctx.fill();
       });
     }
@@ -621,15 +522,15 @@
     function drawProjectile() {
       if (!projectile.active) return;
       const grad = ctx.createRadialGradient(projectile.x, projectile.y, 0, projectile.x, projectile.y, 13);
-      grad.addColorStop(0, 'rgba(210, 150, 255, 0.95)');
-      grad.addColorStop(1, 'rgba(150, 70, 255, 0)');
+      grad.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
+      grad.addColorStop(1, 'rgba(200, 200, 200, 0)');
       ctx.beginPath();
       ctx.arc(projectile.x, projectile.y, 13, 0, Math.PI * 2);
       ctx.fillStyle = grad;
       ctx.fill();
       ctx.beginPath();
       ctx.arc(projectile.x, projectile.y, 5.5, 0, Math.PI * 2);
-      ctx.fillStyle = '#f0e0ff';
+      ctx.fillStyle = '#ffffff';
       ctx.fill();
     }
 
@@ -646,11 +547,11 @@
 
     function drawFlashes() {
       if (hitFlash > 0) {
-        ctx.fillStyle = `rgba(140, 80, 220, ${hitFlash / 420})`;
+        ctx.fillStyle = `rgba(255, 255, 255, ${hitFlash / 420})`;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
       if (missFlash > 0) {
-        ctx.fillStyle = `rgba(210, 50, 70, ${missFlash / 420})`;
+        ctx.fillStyle = `rgba(255, 100, 100, ${missFlash / 420})`;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
     }
@@ -666,7 +567,6 @@
       drawParticles();
     }
 
-    // ---------- Ініціалізація гри ----------
     function initGame() {
       score = 0;
       lives = 3;
@@ -679,17 +579,14 @@
       missFlash = 0;
       comboAnim = 0;
       gameState = 'aiming';
-
       launcher.x = canvas.width / 2;
       launcher.y = canvas.height - 100;
-
       spawnEye();
       updateUI();
       updateLives();
       document.getElementById('combo-display').style.opacity = '0';
     }
 
-    // ---------- Pointer-події із блокуванням скролу ----------
     function onPointerDown(e) {
       e.preventDefault();
       if (gameState !== 'aiming') return;
@@ -731,7 +628,6 @@
     canvas.addEventListener('pointerup', onPointerUp, { passive: false });
     canvas.addEventListener('pointercancel', onPointerCancel, { passive: false });
 
-    // ---------- Анімаційний цикл ----------
     let animFrame;
     function gameLoop() {
       updateGame();
@@ -740,7 +636,6 @@
     }
     gameLoop();
 
-    // ---------- Кнопки старту / рестарту ----------
     const startBtn = document.getElementById('start-btn');
     const retryBtn = document.getElementById('retry-btn');
     const startScreen = document.getElementById('start-screen');
@@ -755,7 +650,6 @@
     startBtn.addEventListener('click', startGame);
     retryBtn.addEventListener('click', startGame);
 
-    // Оновлення позиції пушки при зміні розміру
     window.addEventListener('resize', () => {
       launcher.x = canvas.width / 2;
       launcher.y = canvas.height - 100;
