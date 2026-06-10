@@ -53,10 +53,13 @@ dp.include_router(diseases_router)
 dp.include_router(ciphers_router)
 
 BASE_DIR = Path(__file__).parent.parent
+# Prefer package static directory (eye_bot/static), fall back to project-level static
+PACKAGE_STATIC = Path(__file__).parent / "static"
 
 async def serve_static(request):
     filename = request.match_info.get('filename', '')
-    static_root = BASE_DIR / "static"
+    # prefer package static if available (this repo places files under eye_bot/static)
+    static_root = PACKAGE_STATIC if PACKAGE_STATIC.exists() else (BASE_DIR / "static")
     # Prevent path traversal: resolve and ensure target is under static_root
     target = (static_root / filename).resolve()
     try:
@@ -73,6 +76,7 @@ async def serve_static(request):
         target = target / "index.html"
 
     if target.exists() and target.is_file():
+        logger.info(f"✅ Served static file: {target}")
         return web.FileResponse(target)
 
     logger.warning(f"❌ File not found: {target}")
