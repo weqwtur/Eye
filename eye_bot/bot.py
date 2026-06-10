@@ -21,6 +21,7 @@ load_dotenv()
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_ID = int(os.getenv("ADMIN_ID") or 0)
+DISABLE_TELEGRAM = os.getenv("DISABLE_TELEGRAM") in ("1", "true", "True")
 
 bot = Bot(
     token=BOT_TOKEN,
@@ -58,8 +59,11 @@ PACKAGE_STATIC = Path(__file__).parent / "static"
 
 async def serve_static(request):
     filename = request.match_info.get('filename', '')
-    # prefer package static if available (this repo places files under eye_bot/static)
-    static_root = PACKAGE_STATIC if PACKAGE_STATIC.exists() else (BASE_DIR / "static")
+    # prefer package static if available (this repo places files under eye_bot/static/games)
+    if (PACKAGE_STATIC / "games").exists():
+        static_root = PACKAGE_STATIC / "games"
+    else:
+        static_root = PACKAGE_STATIC if PACKAGE_STATIC.exists() else (BASE_DIR / "static")
     # Prevent path traversal: resolve and ensure target is under static_root
     target = (static_root / filename).resolve()
     try:
@@ -101,8 +105,8 @@ async def flush_pending_updates():
 
 
 async def main():
-    if ADMIN_ID == 0:
-        raise RuntimeError("ADMIN_ID environment variable must be set")
+    if not DISABLE_TELEGRAM and ADMIN_ID == 0:
+        raise RuntimeError("ADMIN_ID environment variable must be set when Telegram is enabled")
 
     dp.startup.register(on_startup)
 
@@ -122,8 +126,18 @@ async def main():
     logger.info("🌐 Web server started on port 8080")
     logger.info("🎮 Mini App: https://eye-production-853c.up.railway.app/games/hit-the-eye/")
 
-    await flush_pending_updates()
-    await dp.start_polling(bot)
+    # If Telegram integration is disabled (local testing), skip polling.
+    if not DISABLE_TELEGRAM:
+        await flush_pending_updates()
+        await dp.start_polling(bot)
+    else:
+        logger.info("ℹ️ Telegram disabled: running web server only (DISABLE_TELEGRAM=1)")
+        # keep the process alive so the web server stays up for testing
+        stop_event = asyncio.Event()
+        try:
+            await stop_event.wait()
+        except asyncio.CancelledError:
+            pass
 
 
 if __name__ == "__main__":
