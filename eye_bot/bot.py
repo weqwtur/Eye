@@ -55,11 +55,27 @@ dp.include_router(ciphers_router)
 BASE_DIR = Path(__file__).parent.parent
 
 async def serve_static(request):
-    filename = request.match_info['filename']
-    file_path = BASE_DIR / "static" / filename
-    if file_path.exists() and file_path.is_file():
-        return web.FileResponse(file_path)
-    logger.warning(f"❌ File not found: {file_path}")
+    filename = request.match_info.get('filename', '')
+    static_root = BASE_DIR / "static"
+    # Prevent path traversal: resolve and ensure target is under static_root
+    target = (static_root / filename).resolve()
+    try:
+        static_root_resolved = static_root.resolve()
+    except Exception:
+        static_root_resolved = static_root
+
+    if static_root_resolved != target and static_root_resolved not in target.parents:
+        logger.warning(f"Forbidden static access attempt: {target}")
+        return web.Response(status=403, text="Forbidden")
+
+    # If directory requested, serve its index.html
+    if target.is_dir():
+        target = target / "index.html"
+
+    if target.exists() and target.is_file():
+        return web.FileResponse(target)
+
+    logger.warning(f"❌ File not found: {target}")
     return web.Response(status=404, text=f"File not found: {filename}")
 
 
@@ -76,7 +92,8 @@ async def flush_pending_updates():
         if updates:
             await bot.get_updates(offset=updates[-1].update_id + 1, timeout=0)
     except Exception as e:
-        logger.error(f"Flush error: {e}")
+        # Don't fail startup on transient Telegram errors (e.g., another getUpdates running)
+        logger.warning(f"Flush error (ignored): {e}")
 
 
 async def main():
