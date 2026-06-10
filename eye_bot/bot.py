@@ -70,6 +70,11 @@ async def flush_pending_updates() -> None:
 
 
 async def main():
+    if ADMIN_ID == 0:
+        raise RuntimeError(
+            "ADMIN_ID environment variable must be set and non-zero before starting the bot."
+        )
+
     dp.startup.register(on_startup)
 
     logger.info("=" * 50)
