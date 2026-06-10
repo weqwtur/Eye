@@ -108,7 +108,7 @@ def _build_keyboard(media_id: int, index: int, total: int, tiktok: str | None):
    kb = InlineKeyboardBuilder()
 
    if tiktok:
-       kb.button(text="TikTok", url=tiktok)
+       kb.button(text=" ", url=tiktok)
 
    if index > 0:
        kb.button(text="⭠", callback_data=f"media{media_id}:{index-1}")
