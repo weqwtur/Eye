@@ -2,7 +2,7 @@
 import os
 from dotenv import load_dotenv
 from aiogram import Router, F
-from aiogram.types import Message, BusinessConnection, Update
+from aiogram.types import Message
 import google.genai as genai
 import logging
 
@@ -54,13 +54,7 @@ async def business_message_handler(message: Message):
             answer,
             business_connection_id=message.business_connection_id
         )
-        logger.info(f"✅ Відповідь від бізнес акаунту: {answer[:50]}")
+        logger.info(f"✅ Відповідь: {answer[:50]}")
             
     except Exception as e:
         logger.error(f"❌ Помилка: {e}")
-
-
-@router.update(F.business_connection)
-async def business_connection_handler(update: Update):
-    bc = update.business_connection
-    logger.info(f"🔗 Business Connection: {bc.id} - {bc.is_enabled}")
