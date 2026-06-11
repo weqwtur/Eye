@@ -6,6 +6,7 @@ from pathlib import Path
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.types import AllowedUpdates
 from dotenv import load_dotenv
 
 from aiohttp import web
@@ -56,17 +57,14 @@ dp.include_router(diseases_router)
 dp.include_router(ciphers_router)
 
 BASE_DIR = Path(__file__).parent.parent
-# Prefer package static directory (eye_bot/static), fall back to project-level static
 PACKAGE_STATIC = Path(__file__).parent / "static"
 
 async def serve_static(request):
     filename = request.match_info.get('filename', '')
-    # prefer package static if available (this repo places files under eye_bot/static/games)
     if (PACKAGE_STATIC / "games").exists():
         static_root = PACKAGE_STATIC / "games"
     else:
         static_root = PACKAGE_STATIC if PACKAGE_STATIC.exists() else (BASE_DIR / "static")
-    # Prevent path traversal: resolve and ensure target is under static_root
     target = (static_root / filename).resolve()
     try:
         static_root_resolved = static_root.resolve()
@@ -77,7 +75,6 @@ async def serve_static(request):
         logger.warning(f"Forbidden static access attempt: {target}")
         return web.Response(status=403, text="Forbidden")
 
-    # If directory requested, serve its index.html
     if target.is_dir():
         target = target / "index.html"
 
@@ -102,7 +99,6 @@ async def flush_pending_updates():
         if updates:
             await bot.get_updates(offset=updates[-1].update_id + 1, timeout=0)
     except Exception as e:
-        # Don't fail startup on transient Telegram errors (e.g., another getUpdates running)
         logger.warning(f"Flush error (ignored): {e}")
 
 
@@ -128,13 +124,14 @@ async def main():
     logger.info("🌐 Web server started on port 8080")
     logger.info("🎮 Mini App: https://eye-production-853c.up.railway.app/games/hit-the-eye/")
 
-    # If Telegram integration is disabled (local testing), skip polling.
     if not DISABLE_TELEGRAM:
         await flush_pending_updates()
-        await dp.start_polling(bot)
+        await dp.start_polling(
+            bot,
+            allowed_updates=AllowedUpdates.all()
+        )
     else:
         logger.info("ℹ️ Telegram disabled: running web server only (DISABLE_TELEGRAM=1)")
-        # keep the process alive so the web server stays up for testing
         stop_event = asyncio.Event()
         try:
             await stop_event.wait()
