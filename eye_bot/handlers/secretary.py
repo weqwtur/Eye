@@ -11,55 +11,50 @@ load_dotenv()
 
 router = Router()
 
-OWNER_ID = int(os.getenv("ADMIN_ID") or 0)
+# Додайте свій ID у .env, щоб бот знав, на чиї повідомлення не відповідати
+MY_ID = int(os.getenv("MY_ID", 0)) 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 client = genai.Client(api_key=GEMINI_API_KEY)
 logger = logging.getLogger(__name__)
 
-SECRETARY_SYSTEM = "Ти персональний секретар користувача. Відповідай ДУЖЕ коротко."
+# Використовуємо стабільну модель без "Thinking" (2.0-flash)
+STABLE_MODEL = "models/gemini-2.0-flash"
+
+SECRETARY_SYSTEM = "Ти персональний секретар. Відповідай дуже коротко. Ігноруй внутрішні міркування, видавай лише фінальний текст відповіді."
 
 @retry(
     retry=retry_if_exception_type((ServerError, ClientError)),
-    stop=stop_after_attempt(3),
-    wait=wait_exponential(multiplier=1, min=2, max=10)
+    stop=stop_after_attempt(2),
+    wait=wait_exponential(multiplier=1, min=1, max=5)
 )
-async def generate_response(prompt: str, model_name: str = "models/gemini-3.5-flash"):
-    """Функція для запиту до API з підтримкою повторних спроб."""
-    return client.models.generate_content(
+async def generate_response(prompt: str, model_name: str):
+    response = client.models.generate_content(
         model=model_name,
         contents=prompt,
-        config=genai.types.GenerateContentConfig(
-            max_output_tokens=100,
-            temperature=0.7,
-        )
+        config=genai.types.GenerateContentConfig(max_output_tokens=100, temperature=0.7)
     )
+    
+    # ПРАВИЛЬНИЙ ЗБІР ТЕКСТУ (ігноруємо thought_signature)
+    full_text = "".join([part.text for part in response.candidates[0].content.parts if part.text])
+    return full_text.strip()
 
 async def process_secretary_message(message: Message, business: bool = False):
+    # ФІЛЬТРАЦІЯ: не відповідаємо на свої ж повідомлення
+    if message.from_user.id == MY_ID:
+        return
+
     if not message.text:
         return
 
-    sender = message.from_user.first_name or "хто-то"
-    context = f"[тобі пише {sender}]: {message.text}"
-    prompt = SECRETARY_SYSTEM + "\n\n" + context
+    prompt = f"{SECRETARY_SYSTEM}\n\n[Користувач {message.from_user.first_name}]: {message.text}"
 
     try:
-        logger.info(f"💬 Обробляю: {message.text[:50]}")
-        
-        # Спроба з основною моделлю
-        response = await generate_response(prompt, "models/gemini-3.5-flash")
-        answer = response.text.strip()
-
+        logger.info(f"💬 Обробляю: {message.text[:30]}")
+        answer = await generate_response(prompt, STABLE_MODEL)
     except Exception as e:
-        logger.warning(f"⚠️ Основна модель не відповіла, спроба fallback: {e}")
-        try:
-            # Спроба з більш стабільною lite моделлю
-            response = await generate_response(prompt, "models/gemini-3.1-flash-lite")
-            answer = response.text.strip()
-        except Exception as e2:
-            logger.error(f"❌ Критична помилка після fallback: {e2}")
-            await message.reply("Сервер AI зараз перевантажений. Спробуй через хвилину.")
-            return
+        logger.warning(f"⚠️ Модель не відповіла: {e}")
+        return # Краще мовчати, ніж спамити помилками в бізнес-чаті
 
     reply_kwargs = {}
     if business and getattr(message, "business_connection_id", None):
@@ -68,12 +63,12 @@ async def process_secretary_message(message: Message, business: bool = False):
     await message.reply(answer, **reply_kwargs)
     logger.info(f"✅ Відповідь: {answer}")
 
-
 @router.message(F.chat.type == "private", F.text)
 async def private_secretary(message: Message):
     await process_secretary_message(message)
 
-
 @router.business_message(F.text)
 async def business_secretary(message: Message):
-    await process_secretary_message(message, business=True)
+    # Додаємо умову: відповідаємо тільки якщо це не бот і не ми
+    if not message.from_user.is_bot:
+        await process_secretary_message(message, business=True)
