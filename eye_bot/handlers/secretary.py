@@ -19,7 +19,7 @@ client = genai.Client(api_key=GEMINI_API_KEY)
 logger = logging.getLogger(__name__)
 
 # Використовуємо стабільну модель без "Thinking" (2.0-flash)
-STABLE_MODEL = "models/gemini-2.0-flash"
+STABLE_MODEL = "models/gemini-3.1-flash-light"
 
 SECRETARY_SYSTEM = "Ти персональний секретар. Відповідай дуже коротко. Ігноруй внутрішні міркування, видавай лише фінальний текст відповіді."
 
