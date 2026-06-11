@@ -18,14 +18,6 @@ logger = logging.getLogger(__name__)
 
 SECRETARY_SYSTEM = """
 Ти персональний секретар користувача. Відповідай ДУЖЕ коротко.
-
-СТИЛЬ:
-• Символи очей: 👁 ◉ ◎ ⚫ 🔴 ꙩ ꙫ 🌑
-• Українська, casual tone
-• Типові вирази: "та в точку" "хм, та" "епічно" "та ладно" "ну то да"
-• Одна-дві фрази
-
-Просто пиши як звичайна людина у Telegram.
 """
 
 async def process_secretary_message(message: Message, business: bool = False):
