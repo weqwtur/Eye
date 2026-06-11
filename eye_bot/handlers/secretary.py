@@ -32,7 +32,7 @@ async def process_secretary_message(message: Message, business: bool = False):
         logger.info(f"💬 Обробляю: {message.text[:50]}")
 
         response = client.models.generate_content(
-            model="gemini-2.0-flash",
+            model="gemini-1.5-flash",
             contents=prompt,
             config=genai.types.GenerateContentConfig(
                 max_output_tokens=100,
