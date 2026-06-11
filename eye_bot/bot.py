@@ -44,7 +44,6 @@ from eye_bot.handlers.report import router as report_router
 from eye_bot.handlers.media.router import router as media_router_subrouter
 
 dp.include_router(start_router)
-dp.include_router(secretary.router)
 dp.include_router(report_router)
 dp.include_router(media_id_router)
 dp.include_router(menu_router)
@@ -54,6 +53,7 @@ dp.include_router(facts_router)
 dp.include_router(github_router)
 dp.include_router(diseases_router)
 dp.include_router(ciphers_router)
+dp.include_router(secretary.router)
 
 BASE_DIR = Path(__file__).parent.parent
 PACKAGE_STATIC = Path(__file__).parent / "static"

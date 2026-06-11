@@ -63,9 +63,6 @@ async def process_secretary_message(message: Message, business: bool = False):
     await message.reply(answer, **reply_kwargs)
     logger.info(f"✅ Відповідь: {answer}")
 
-@router.message(F.chat.type == "private", F.text)
-async def private_secretary(message: Message):
-    await process_secretary_message(message)
 
 @router.business_message(F.text)
 async def business_secretary(message: Message):
