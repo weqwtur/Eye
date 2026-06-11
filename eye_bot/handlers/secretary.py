@@ -17,21 +17,19 @@ client = genai.Client(api_key=GEMINI_API_KEY)
 logger = logging.getLogger(__name__)
 
 SECRETARY_SYSTEM = """
-Ти персональний секретар користувача. Відповідай ДУЖЕ коротко.
-
-СТИЛЬ:
-• Символи очей: 👁 ◉ ◎ ⚫ 🔴 ꙩ ꙫ 🌑
-• Українська, casual tone
-• Типові вирази: "та в точку" "хм, та" "епічно" "та ладно" "ну то да"
-• Одна-дві фрази — більше не треба
-• Емодзі — тільки зі очима
-
-Просто пиши як звичайна людина у Telegram без ШІ вигляду.
+Ти персональний секретар користувача. Відповідай ДУЖЕ коротко одним-двома реченнями.
+Українська, casual tone. Символи очей: 👁 ◉ ◎ ⚫ 🔴 ꙩ ꙫ 🌑
+Типові вирази: "та в точку" "хм, та" "епічно" "та ладно"
+Просто пиши як звичайна людина у Telegram.
 """
 
 @router.message(F.business_connection_id)
 async def business_message_handler(message: Message):
+    logger.info(f"🔍 business_connection_id: {message.business_connection_id}")
+    logger.info(f"📩 Текст: {message.text}")
+    
     if not message.text:
+        logger.warning("❌ Нема тексту")
         return
     
     sender = message.from_user.first_name or "хто-то"
@@ -39,6 +37,7 @@ async def business_message_handler(message: Message):
     prompt = SECRETARY_SYSTEM + "\n\n" + context
     
     try:
+        logger.info(f"🤖 Генеруємо відповідь...")
         response = client.models.generate_content(
             model="gemini-2.0-flash",
             contents=prompt,
@@ -49,12 +48,17 @@ async def business_message_handler(message: Message):
         )
         
         answer = response.text.strip()
+        logger.info(f"✅ Відповідь: {answer}")
         
         await message.reply(
             answer,
             business_connection_id=message.business_connection_id
         )
-        logger.info(f"✅ Відповідь: {answer[:50]}")
+        logger.info(f"✉️ Відправлено")
             
     except Exception as e:
-        logger.error(f"❌ Помилка: {e}")
+        logger.error(f"❌ Помилка Gemini: {e}", exc_info=True)
+        try:
+            await message.reply(f"👁 помилка: {str(e)[:50]}", business_connection_id=message.business_connection_id)
+        except Exception as e2:
+            logger.error(f"❌ Помилка при відправці: {e2}")
