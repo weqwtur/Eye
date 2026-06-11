@@ -23,26 +23,28 @@ SECRETARY_SYSTEM = """
 • Символи очей: 👁 ◉ ◎ ⚫ 🔴 ꙩ ꙫ 🌑
 • Українська, casual tone
 • Типові вирази: "та в точку" "хм, та" "епічно" "та ладно" "ну то да"
-• Одна-дві фрази — більше не треба
-• Емодзі — тільки зі очима
+• Одна-дві фрази
+• Без ШІ вигляду
 
-Просто пиши як звичайна людина у Telegram без ШІ вигляду.
+Просто пиши як звичайна людина у Telegram.
 """
 
-@router.message(F.business_connection_id)
-async def business_message_handler(message: Message):
-    logger.info(f"🔍 ПЕРЕХОПЛЕНО: business_connection_id={message.business_connection_id}, text={message.text}")
+@router.message(F.chat.type == "private")
+async def private_message(message: Message):
+    if message.from_user.id == OWNER_ID:
+        logger.info(f"⏭️ Пропускаємо твоє повідомлення")
+        return
     
     if not message.text:
-        logger.warning("❌ Нема тексту")
         return
+    
+    logger.info(f"💬 Обробляємо: {message.text[:50]}")
     
     sender = message.from_user.first_name or "хто-то"
     context = f"[тобі пише {sender}]: {message.text}"
     prompt = SECRETARY_SYSTEM + "\n\n" + context
     
     try:
-        logger.info(f"🤖 Генеруємо через Gemini...")
         response = client.models.generate_content(
             model="gemini-2.0-flash",
             contents=prompt,
@@ -55,16 +57,8 @@ async def business_message_handler(message: Message):
         answer = response.text.strip()
         logger.info(f"✅ Відповідь: {answer}")
         
-        await message.reply(
-            answer,
-            business_connection_id=message.business_connection_id
-        )
-        logger.info(f"✉️ Відправлено успішно")
+        await message.reply(answer)
+        logger.info(f"✉️ Відправлено")
             
     except Exception as e:
         logger.error(f"❌ Помилка: {e}", exc_info=True)
-
-
-@router.message()
-async def catch_all(message: Message):
-    logger.info(f"📩 Усе інше: {message.message_id}, business_connection_id={message.business_connection_id}, text={message.text[:50] if message.text else 'None'}")
