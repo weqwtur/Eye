@@ -2,8 +2,9 @@
 import os
 from dotenv import load_dotenv
 from aiogram import Router, F
-from aiogram.types import Message
+from aiogram.types import Message, BusinessConnection, Update
 import google.genai as genai
+import logging
 
 load_dotenv()
 
@@ -13,6 +14,7 @@ OWNER_ID = int(os.getenv("ADMIN_ID") or 0)
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 client = genai.Client(api_key=GEMINI_API_KEY)
+logger = logging.getLogger(__name__)
 
 SECRETARY_SYSTEM = """
 Ти персональний секретар користувача. Відповідай ДУЖЕ коротко.
@@ -27,11 +29,8 @@ SECRETARY_SYSTEM = """
 Просто пиши як звичайна людина у Telegram без ШІ вигляду.
 """
 
-@router.message()
-async def secretary_handler(message: Message):
-    if message.from_user.id == OWNER_ID:
-        return
-    
+@router.message(F.business_connection_id)
+async def business_message_handler(message: Message):
     if not message.text:
         return
     
@@ -50,7 +49,18 @@ async def secretary_handler(message: Message):
         )
         
         answer = response.text.strip()
-        await message.reply(answer)
+        
+        await message.reply(
+            answer,
+            business_connection_id=message.business_connection_id
+        )
+        logger.info(f"✅ Відповідь від бізнес акаунту: {answer[:50]}")
             
     except Exception as e:
-        pass
+        logger.error(f"❌ Помилка: {e}")
+
+
+@router.update(F.business_connection)
+async def business_connection_handler(update: Update):
+    bc = update.business_connection
+    logger.info(f"🔗 Business Connection: {bc.id} - {bc.is_enabled}")
