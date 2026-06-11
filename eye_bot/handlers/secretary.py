@@ -1,10 +1,11 @@
-# eye_bot/handlers/secretary.py
 import os
+import logging
 from dotenv import load_dotenv
 from aiogram import Router, F
 from aiogram.types import Message
 import google.genai as genai
-import logging
+from google.genai.errors import ServerError, ClientError
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 load_dotenv()
 
@@ -16,9 +17,23 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 client = genai.Client(api_key=GEMINI_API_KEY)
 logger = logging.getLogger(__name__)
 
-SECRETARY_SYSTEM = """
-Ти персональний секретар користувача. Відповідай ДУЖЕ коротко.
-"""
+SECRETARY_SYSTEM = "Ти персональний секретар користувача. Відповідай ДУЖЕ коротко."
+
+@retry(
+    retry=retry_if_exception_type((ServerError, ClientError)),
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=2, max=10)
+)
+async def generate_response(prompt: str, model_name: str = "models/gemini-3.5-flash"):
+    """Функція для запиту до API з підтримкою повторних спроб."""
+    return client.models.generate_content(
+        model=model_name,
+        contents=prompt,
+        config=genai.types.GenerateContentConfig(
+            max_output_tokens=100,
+            temperature=0.7,
+        )
+    )
 
 async def process_secretary_message(message: Message, business: bool = False):
     if not message.text:
@@ -30,27 +45,28 @@ async def process_secretary_message(message: Message, business: bool = False):
 
     try:
         logger.info(f"💬 Обробляю: {message.text[:50]}")
-
-        response = client.models.generate_content(
-            model="gemini-3.5-flash",
-            contents=prompt,
-            config=genai.types.GenerateContentConfig(
-                max_output_tokens=100,
-                temperature=0.7,
-            )
-        )
-
+        
+        # Спроба з основною моделлю
+        response = await generate_response(prompt, "models/gemini-3.5-flash")
         answer = response.text.strip()
 
-        reply_kwargs = {}
-        if business and getattr(message, "business_connection_id", None):
-            reply_kwargs["business_connection_id"] = message.business_connection_id
-
-        await message.reply(answer, **reply_kwargs)
-        logger.info(f"✅ Відповідь: {answer}")
-
     except Exception as e:
-        logger.error(f"❌ Помилка: {e}", exc_info=True)
+        logger.warning(f"⚠️ Основна модель не відповіла, спроба fallback: {e}")
+        try:
+            # Спроба з більш стабільною lite моделлю
+            response = await generate_response(prompt, "models/gemini-3.1-flash-lite")
+            answer = response.text.strip()
+        except Exception as e2:
+            logger.error(f"❌ Критична помилка після fallback: {e2}")
+            await message.reply("Сервер AI зараз перевантажений. Спробуй через хвилину.")
+            return
+
+    reply_kwargs = {}
+    if business and getattr(message, "business_connection_id", None):
+        reply_kwargs["business_connection_id"] = message.business_connection_id
+
+    await message.reply(answer, **reply_kwargs)
+    logger.info(f"✅ Відповідь: {answer}")
 
 
 @router.message(F.chat.type == "private", F.text)
