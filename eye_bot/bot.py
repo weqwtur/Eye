@@ -31,7 +31,6 @@ bot = Bot(
 dp = Dispatcher(storage=MemoryStorage())
 
 from eye_bot.handlers.start import router as start_router
-from eye_bot.handlers import secretary as secretary
 from eye_bot.handlers.media_id import router as media_id_router
 from eye_bot.handlers.menu import router as menu_router
 from eye_bot.handlers.top import router as top_router
@@ -41,7 +40,6 @@ from eye_bot.handlers.github import router as github_router
 from eye_bot.handlers.diseases import router as diseases_router
 from eye_bot.handlers.ciphers import router as ciphers_router
 from eye_bot.handlers.report import router as report_router
-from eye_bot.handlers.media.router import router as media_router_subrouter
 
 dp.include_router(start_router)
 dp.include_router(report_router)
@@ -53,7 +51,6 @@ dp.include_router(facts_router)
 dp.include_router(github_router)
 dp.include_router(diseases_router)
 dp.include_router(ciphers_router)
-dp.include_router(secretary.router)
 
 BASE_DIR = Path(__file__).parent.parent
 PACKAGE_STATIC = Path(__file__).parent / "static"
