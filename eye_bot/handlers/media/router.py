@@ -237,3 +237,9 @@ async def media_switch(callback: types.CallbackQuery):
     finally:
         if lock.locked():
             lock.release()
+
+
+@router.callback_query(F.data == "open_media_menu", F.message.chat.type == "private")
+async def back_to_media_menu(callback: types.CallbackQuery):
+    await callback.message.edit_text("📁 Choose media:", reply_markup=media_menu_keyboard())
+    await callback.answer()
