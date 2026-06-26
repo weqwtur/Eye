@@ -241,5 +241,24 @@ async def media_switch(callback: types.CallbackQuery):
 
 @router.callback_query(F.data == "open_media_menu", F.message.chat.type == "private")
 async def back_to_media_menu(callback: types.CallbackQuery):
+<<<<<<< HEAD
     await callback.message.edit_text("📁 Choose media:", reply_markup=media_menu_keyboard())
+=======
+    msg = callback.message
+
+    # Media messages (photo/video) can't be edited as text — delete and resend
+    if msg.photo or msg.video or msg.animation:
+        try:
+            await msg.delete()
+            await msg.answer("📁 Choose media:", reply_markup=media_menu_keyboard())
+        except Exception as e:
+            logger.error(f"Error returning to media menu: {e}", exc_info=True)
+            try:
+                await msg.edit_caption(caption="📁 Choose media:", reply_markup=media_menu_keyboard())
+            except Exception:
+                pass
+    else:
+        await msg.edit_text("📁 Choose media:", reply_markup=media_menu_keyboard())
+
+>>>>>>> 846992e (upd)
     await callback.answer()
